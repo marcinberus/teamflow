@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/" />
+
+  <Folder Name="/src/TeamFlow/">
+    <Project Path="src/TeamFlow/TeamFlow.Api/TeamFlow.Api.csproj" />
+    <Project Path="src/TeamFlow/TeamFlow.Application/TeamFlow.Application.csproj" />
+    <Project Path="src/TeamFlow/TeamFlow.Domain/TeamFlow.Domain.csproj" />
+    <Project Path="src/TeamFlow/TeamFlow.Importing/TeamFlow.Importing.csproj" />
+    <Project Path="src/TeamFlow/TeamFlow.Infrastructure/TeamFlow.Infrastructure.csproj" />
+  </Folder>
+  
+  <Folder Name="/tests/" />
+  
+  <Folder Name="/tests/TeamFlow/">
+    <Project Path="tests/TeamFlow/TeamFlow.Tests.Integration/TeamFlow.Tests.Integration.csproj" />
+    <Project Path="tests/TeamFlow/TeamFlow.Tests.Unit/TeamFlow.Tests.Unit.csproj" />
+  </Folder>  
+  
+  <Folder Name="/benchmarks/">
+    <Project Path="src/TeamFlow/TeamFlow.Benchmarks/TeamFlow.Benchmarks.csproj" />
+  </Folder>
+</Solution>
