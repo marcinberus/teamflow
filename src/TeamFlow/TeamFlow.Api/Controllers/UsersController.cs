@@ -1,7 +1,10 @@
 using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamFlow.Application.Users.Commands.RegisterUser;
+using TeamFlow.Application.Users.DTOs;
+using TeamFlow.Application.Users.Queries.GetMyProfile;
 
 namespace TeamFlow.Api.Controllers;
 
@@ -27,5 +30,16 @@ public sealed class UsersController : ControllerBase
     {
         var result = await _mediator.Send(command, cancellationToken);
         return CreatedAtAction(nameof(Register), new { userId = result.UserId }, result);
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMyProfile(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetMyProfileQuery(), cancellationToken);
+        return Ok(result);
     }
 }

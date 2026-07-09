@@ -5,6 +5,7 @@ using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Users.Interfaces;
 using TeamFlow.Infrastructure.Authentication;
 using TeamFlow.Infrastructure.Database;
+using TeamFlow.Infrastructure.Database.ReadServices;
 using TeamFlow.Infrastructure.Database.Repositories;
 using TeamFlow.Infrastructure.Time;
 
@@ -28,6 +29,9 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         services.AddScoped<IUserRepository, UserRepository>();
+
+        services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
+        services.AddScoped<IUserReadService, UserReadService>();
 
         return services;
     }
