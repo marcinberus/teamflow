@@ -57,10 +57,16 @@ https://localhost:7025/swagger
 
 ### Authenticating in Swagger
 
-1. Call `POST /api/v1/users` to register a new user — the response contains a `token`.
-2. Click the **Authorize** button (lock icon) in the top-right of Swagger UI.
-3. Enter `Bearer <token>` (including the `Bearer ` prefix) and click **Authorize**.
-4. All subsequent requests will include the JWT header automatically.
+**Option 1: Register a new user**
+1. Call `POST /api/v1/users` with email, password, firstName, lastName, and role — the response contains a `token`.
+
+**Option 2: Log in with existing credentials**
+1. Call `POST /api/v1/login` with email and password — the response contains a `token`.
+
+**Authorize requests**
+1. Click the **Authorize** button (lock icon) in the top-right of Swagger UI.
+2. Enter `Bearer <token>` (including the `Bearer ` prefix) and click **Authorize**.
+3. All subsequent requests will include the JWT Bearer header automatically.
 
 
 ## API endpoints
@@ -70,6 +76,7 @@ All routes are versioned under `/api/v1/`.
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | `POST` | `/api/v1/users` | — | Register a new user, returns JWT |
+| `POST` | `/api/v1/login` | — | Authenticate an existing user, returns JWT |
 
 ## Running tests
 
