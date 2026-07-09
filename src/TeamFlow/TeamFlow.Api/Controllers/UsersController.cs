@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamFlow.Application.Users.Commands.RegisterUser;
+using TeamFlow.Application.Users.Commands.UpdateProfile;
 using TeamFlow.Application.Users.DTOs;
 using TeamFlow.Application.Users.Queries.GetMyProfile;
 
@@ -41,5 +42,19 @@ public sealed class UsersController : ControllerBase
     {
         var result = await _mediator.Send(new GetMyProfileQuery(), cancellationToken);
         return Ok(result);
+    }
+
+    [HttpPatch("me")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateProfile(
+        [FromBody] UpdateProfileCommand command,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(command, cancellationToken);
+        return NoContent();
     }
 }
