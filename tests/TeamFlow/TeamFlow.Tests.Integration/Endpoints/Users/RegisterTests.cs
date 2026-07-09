@@ -20,7 +20,7 @@ public sealed class RegisterTests : IClassFixture<TeamFlowWebAppFactory>
         var command = new RegisterUserCommand(
             "alice@example.com", "P@ssw0rd!", "Alice", "Smith", "Developer");
 
-        var response = await _client.PostAsJsonAsync("/api/v1/users", command);
+        var response = await _client.PostAsJsonAsync(Paths.Users, command);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var result = await response.Content.ReadFromJsonAsync<RegisterUserResult>();
@@ -35,7 +35,7 @@ public sealed class RegisterTests : IClassFixture<TeamFlowWebAppFactory>
         var command = new RegisterUserCommand(
             "not-an-email", "P@ssw0rd!", "Alice", "Smith", "Developer");
 
-        var response = await _client.PostAsJsonAsync("/api/v1/users", command);
+        var response = await _client.PostAsJsonAsync(Paths.Users, command);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
@@ -46,7 +46,7 @@ public sealed class RegisterTests : IClassFixture<TeamFlowWebAppFactory>
         var command = new RegisterUserCommand(
             "bob@example.com", "weakpass", "Bob", "Jones", "Developer");
 
-        var response = await _client.PostAsJsonAsync("/api/v1/users", command);
+        var response = await _client.PostAsJsonAsync(Paths.Users, command);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
@@ -57,7 +57,7 @@ public sealed class RegisterTests : IClassFixture<TeamFlowWebAppFactory>
         var command = new RegisterUserCommand(
             "bob@example.com", "Password1", "Bob", "Jones", "Developer");
 
-        var response = await _client.PostAsJsonAsync("/api/v1/users", command);
+        var response = await _client.PostAsJsonAsync(Paths.Users, command);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
@@ -68,7 +68,7 @@ public sealed class RegisterTests : IClassFixture<TeamFlowWebAppFactory>
         var command = new RegisterUserCommand(
             "carol@example.com", "P@ssw0rd!", "Carol", "White", "SuperAdmin");
 
-        var response = await _client.PostAsJsonAsync("/api/v1/users", command);
+        var response = await _client.PostAsJsonAsync(Paths.Users, command);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
@@ -79,8 +79,8 @@ public sealed class RegisterTests : IClassFixture<TeamFlowWebAppFactory>
         var command = new RegisterUserCommand(
             "duplicate@example.com", "P@ssw0rd!", "Dave", "Brown", "Manager");
 
-        await _client.PostAsJsonAsync("/api/v1/users", command);
-        var response = await _client.PostAsJsonAsync("/api/v1/users", command);
+        await _client.PostAsJsonAsync(Paths.Users, command);
+        var response = await _client.PostAsJsonAsync(Paths.Users, command);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
     }
@@ -91,7 +91,7 @@ public sealed class RegisterTests : IClassFixture<TeamFlowWebAppFactory>
         var command = new RegisterUserCommand(
             "eve@example.com", "P@ssw0rd!", "", "Adams", "Developer");
 
-        var response = await _client.PostAsJsonAsync("/api/v1/users", command);
+        var response = await _client.PostAsJsonAsync(Paths.Users, command);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
@@ -102,7 +102,7 @@ public sealed class RegisterTests : IClassFixture<TeamFlowWebAppFactory>
         var command = new RegisterUserCommand(
             "frank@example.com", "P@ssw0rd!", "Frank", "Lee", "Admin");
 
-        var response = await _client.PostAsJsonAsync("/api/v1/users", command);
+        var response = await _client.PostAsJsonAsync(Paths.Users, command);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         response.Headers.Location.Should().NotBeNull();
