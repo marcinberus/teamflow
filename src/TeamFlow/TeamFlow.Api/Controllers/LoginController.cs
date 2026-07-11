@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using TeamFlow.Api.Middleware;
 using TeamFlow.Application.Users.Commands.LoginUser;
 
 namespace TeamFlow.Api.Controllers;
@@ -26,6 +27,17 @@ public sealed class LoginController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+
+        if (!result.IsSuccess)
+        {
+            var failure = ApiErrorMessages.GetFailureMapping(result.Error);
+
+            return Problem(
+                statusCode: failure.StatusCode,
+                title: failure.Title,
+                detail: result.Error);
+        }
+
+        return Ok(result.Value);
     }
 }

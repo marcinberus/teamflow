@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TeamFlow.Api.Middleware;
 using TeamFlow.Application.Users.Commands.RegisterUser;
 using TeamFlow.Application.Users.Commands.UpdateProfile;
 using TeamFlow.Application.Users.DTOs;
@@ -30,7 +31,21 @@ public sealed class UsersController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
-        return CreatedAtAction(nameof(Register), new { userId = result.UserId }, result);
+
+        if (!result.IsSuccess)
+        {
+            var failure = ApiErrorMessages.GetFailureMapping(result.Error);
+
+            return Problem(
+                statusCode: failure.StatusCode,
+                title: failure.Title,
+                detail: result.Error);
+        }
+
+        return CreatedAtAction(
+            nameof(Register),
+            new { userId = result.Value!.UserId },
+            result.Value);
     }
 
     [HttpGet("me")]

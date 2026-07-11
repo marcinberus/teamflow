@@ -1,11 +1,11 @@
 using FluentAssertions;
 using NSubstitute;
+using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Users.Commands.LoginUser;
 using TeamFlow.Application.Users.Interfaces;
 using TeamFlow.Domain.Entities;
 using TeamFlow.Domain.Enums;
-using TeamFlow.Domain.Exceptions;
 
 namespace TeamFlow.Tests.Unit.Application.Users;
 
@@ -43,13 +43,15 @@ public class LoginUserCommandHandlerTests
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        result.Token.Should().Be("token123");
-        result.UserId.Should().Be(user.Id);
-        result.Role.Should().Be("Developer");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.Token.Should().Be("token123");
+        result.Value.UserId.Should().Be(user.Id);
+        result.Value.Role.Should().Be("Developer");
     }
 
     [Fact]
-    public async Task Handle_ShouldThrowUnauthorizedException_WhenEmailNotFound()
+    public async Task Handle_ShouldReturnFailure_WhenEmailNotFound()
     {
         var command = new LoginUserCommand("unknown@example.com", "P@ssw0rd!");
 
@@ -57,13 +59,15 @@ public class LoginUserCommandHandlerTests
             .GetByEmailAsync(command.Email, Arg.Any<CancellationToken>())
             .Returns((User?)null);
 
-        var act = () => _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Value.Should().BeNull();
+        result.Error.Should().Be(ErrorMessages.InvalidCredentials);
     }
 
     [Fact]
-    public async Task Handle_ShouldThrowUnauthorizedException_WhenPasswordIsIncorrect()
+    public async Task Handle_ShouldReturnFailure_WhenPasswordIsIncorrect()
     {
         var user = User.Create("alice@example.com", "hashed", "Alice", "Smith", Role.Developer, DateTimeOffset.UtcNow);
         var command = new LoginUserCommand("alice@example.com", "WrongPassword!");
@@ -75,9 +79,11 @@ public class LoginUserCommandHandlerTests
             .Verify(command.Password, user.PasswordHash)
             .Returns(false);
 
-        var act = () => _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Value.Should().BeNull();
+        result.Error.Should().Be(ErrorMessages.InvalidCredentials);
     }
 
     [Fact]
@@ -93,8 +99,7 @@ public class LoginUserCommandHandlerTests
             .Verify(command.Password, user.PasswordHash)
             .Returns(false);
 
-        var act = () => _handler.Handle(command, CancellationToken.None);
-        await act.Should().ThrowAsync<UnauthorizedException>();
+        await _handler.Handle(command, CancellationToken.None);
 
         _jwtTokenGenerator
             .DidNotReceive()

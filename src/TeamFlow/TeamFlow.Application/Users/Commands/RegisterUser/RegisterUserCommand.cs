@@ -1,4 +1,5 @@
 using MediatR;
+using TeamFlow.Application.Common.Models;
 
 namespace TeamFlow.Application.Users.Commands.RegisterUser;
 
@@ -7,6 +8,6 @@ public record RegisterUserCommand(
     string Password,
     string FirstName,
     string LastName,
-    string Role) : IRequest<RegisterUserResult>;
+    string Role) : IRequest<Result<RegisterUserResult>>;
 
 public record RegisterUserResult(string Token, Guid UserId);

@@ -1,9 +1,10 @@
 using MediatR;
+using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
+using TeamFlow.Application.Common.Models;
 using TeamFlow.Application.Users.Interfaces;
 using TeamFlow.Domain.Entities;
 using TeamFlow.Domain.Enums;
-using TeamFlow.Domain.Exceptions;
 
 namespace TeamFlow.Application.Users.Commands.RegisterUser;
 
@@ -12,20 +13,20 @@ public sealed class RegisterUserCommandHandler(
     IUnitOfWork unitOfWork,
     IPasswordHasher passwordHasher,
     IJwtTokenGenerator jwtTokenGenerator,
-    IDateTimeProvider dateTimeProvider) : IRequestHandler<RegisterUserCommand, RegisterUserResult>
+    IDateTimeProvider dateTimeProvider) : IRequestHandler<RegisterUserCommand, Result<RegisterUserResult>>
 {
-    public async Task<RegisterUserResult> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result<RegisterUserResult>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         if (await userRepository.ExistsByEmailAsync(request.Email, cancellationToken))
         {
-            throw new ConflictException("A user with this email address already exists.");
+            return Result<RegisterUserResult>.Failure(ErrorMessages.EmailAlreadyExists);
         }
 
         var passwordHash = passwordHasher.Hash(request.Password);
 
         if (!Enum.TryParse<Role>(request.Role, out var role))
         {
-            throw new ArgumentException($"Invalid role: {request.Role}.");
+            return Result<RegisterUserResult>.Failure(ErrorMessages.InvalidRole);
         }
 
         var user = User.Create(
@@ -41,6 +42,6 @@ public sealed class RegisterUserCommandHandler(
 
         var token = jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.Role.ToString());
 
-        return new RegisterUserResult(token, user.Id);
+        return Result<RegisterUserResult>.Success(new RegisterUserResult(token, user.Id));
     }
 }

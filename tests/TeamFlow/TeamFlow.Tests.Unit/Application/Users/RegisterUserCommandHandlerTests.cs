@@ -1,11 +1,11 @@
 using FluentAssertions;
 using NSubstitute;
+using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Users.Commands.RegisterUser;
 using TeamFlow.Application.Users.Interfaces;
 using TeamFlow.Domain.Entities;
 using TeamFlow.Domain.Enums;
-using TeamFlow.Domain.Exceptions;
 
 namespace TeamFlow.Tests.Unit.Application.Users;
 
@@ -48,8 +48,10 @@ public class RegisterUserCommandHandlerTests
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        result.Token.Should().Be("token123");
-        result.UserId.Should().NotBeEmpty();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.Token.Should().Be("token123");
+        result.Value.UserId.Should().NotBeEmpty();
     }
 
     [Fact]
@@ -99,7 +101,7 @@ public class RegisterUserCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ShouldThrowConflictException_WhenEmailAlreadyExists()
+    public async Task Handle_ShouldReturnFailure_WhenEmailAlreadyExists()
     {
         var command = new RegisterUserCommand("alice@example.com", "P@ssw0rd!", "Alice", "Smith", "Developer");
 
@@ -107,9 +109,11 @@ public class RegisterUserCommandHandlerTests
             .ExistsByEmailAsync(command.Email, Arg.Any<CancellationToken>())
             .Returns(true);
 
-        var act = () => _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<ConflictException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Value.Should().BeNull();
+        result.Error.Should().Be(ErrorMessages.EmailAlreadyExists);
     }
 
     [Fact]
@@ -121,9 +125,29 @@ public class RegisterUserCommandHandlerTests
             .ExistsByEmailAsync(command.Email, Arg.Any<CancellationToken>())
             .Returns(true);
 
-        var act = () => _handler.Handle(command, CancellationToken.None);
-        await act.Should().ThrowAsync<ConflictException>();
+        await _handler.Handle(command, CancellationToken.None);
 
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnFailure_WhenRoleIsInvalid()
+    {
+        var command = new RegisterUserCommand("alice@example.com", "P@ssw0rd!", "Alice", "Smith", "SuperAdmin");
+
+        _userRepository
+            .ExistsByEmailAsync(command.Email, Arg.Any<CancellationToken>())
+            .Returns(false);
+        _passwordHasher
+            .Hash(command.Password)
+            .Returns("hashed");
+
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Value.Should().BeNull();
+        result.Error.Should().Be(ErrorMessages.InvalidRole);
+        await _userRepository.DidNotReceive().AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -168,7 +192,9 @@ public class RegisterUserCommandHandlerTests
 
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        result.Token.Should().Be("manager_token");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.Token.Should().Be("manager_token");
         _jwtTokenGenerator.Received(1).GenerateToken(Arg.Any<Guid>(), command.Email, "Manager");
     }
 }

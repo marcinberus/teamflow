@@ -16,11 +16,13 @@ public static class ExceptionHandlingExtensions
                 var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
 
                 if (exception is null)
+                {
                     return;
+                }
 
                 switch (exception)
                 {
-                    case ValidationException valdiationException:
+                    case ValidationException validationException:
                         context.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
                         context.Response.ContentType = "application/problem+json";
                         await context.Response.WriteAsJsonAsync(new ValidationProblemDetails
@@ -28,70 +30,56 @@ public static class ExceptionHandlingExtensions
                             Status = StatusCodes.Status422UnprocessableEntity,
                             Title = ApiErrorMessages.ValidationFailedTitle,
                             Detail = ApiErrorMessages.ValidationFailedDetail,
-                            Errors = valdiationException.Errors
+                            Errors = validationException.Errors
                                 .GroupBy(e => e.PropertyName)
                                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
                         }, context.RequestAborted);
                         return;
 
                     case NotFoundException notFoundException:
-                        context.Response.StatusCode = StatusCodes.Status404NotFound;
-                        context.Response.ContentType = "application/problem+json";
-                        await context.Response.WriteAsJsonAsync(new ProblemDetails
-                        {
-                            Status = StatusCodes.Status404NotFound,
-                            Title = ApiErrorMessages.NotFoundTitle,
-                            Detail = notFoundException.Message
-                        }, context.RequestAborted);
-                        return;
-
-                    case UnauthorizedException unauthorizedException:
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        context.Response.ContentType = "application/problem+json";
-                        await context.Response.WriteAsJsonAsync(new ProblemDetails
-                        {
-                            Status = StatusCodes.Status401Unauthorized,
-                            Title = ApiErrorMessages.UnauthorizedTitle,
-                            Detail = unauthorizedException.Message
-                        }, context.RequestAborted);
-                        return;
-
-                    case ForbiddenException forbiddenException:
-                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                        context.Response.ContentType = "application/problem+json";
-                        await context.Response.WriteAsJsonAsync(new ProblemDetails
-                        {
-                            Status = StatusCodes.Status403Forbidden,
-                            Title = ApiErrorMessages.ForbiddenTitle,
-                            Detail = forbiddenException.Message
-                        }, context.RequestAborted);
+                        await WriteProblemAsync(
+                            context,
+                            StatusCodes.Status404NotFound,
+                            ApiErrorMessages.NotFoundTitle,
+                            notFoundException.Message);
                         return;
 
                     case ConflictException conflictException:
-                        context.Response.StatusCode = StatusCodes.Status409Conflict;
-                        context.Response.ContentType = "application/problem+json";
-                        await context.Response.WriteAsJsonAsync(new ProblemDetails
-                        {
-                            Status = StatusCodes.Status409Conflict,
-                            Title = ApiErrorMessages.ConflictTitle,
-                            Detail = conflictException.Message
-                        }, context.RequestAborted);
+                        await WriteProblemAsync(
+                            context,
+                            StatusCodes.Status409Conflict,
+                            ApiErrorMessages.ConflictTitle,
+                            conflictException.Message);
                         return;
 
                     default:
-                        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                        context.Response.ContentType = "application/problem+json";
-                        await context.Response.WriteAsJsonAsync(new ProblemDetails
-                        {
-                            Status = StatusCodes.Status500InternalServerError,
-                            Title = ApiErrorMessages.InternalServerErrorTitle,
-                            Detail = ApiErrorMessages.InternalServerErrorDetail
-                        }, context.RequestAborted);
+                        await WriteProblemAsync(
+                            context,
+                            StatusCodes.Status500InternalServerError,
+                            ApiErrorMessages.InternalServerErrorTitle,
+                            ApiErrorMessages.InternalServerErrorDetail);
                         return;
                 }
             });
         });
 
         return app;
+    }
+
+    private static Task WriteProblemAsync(
+        HttpContext context,
+        int statusCode,
+        string title,
+        string detail)
+    {
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/problem+json";
+
+        return context.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = statusCode,
+            Title = title,
+            Detail = detail
+        }, context.RequestAborted);
     }
 }
