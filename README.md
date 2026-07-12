@@ -79,6 +79,7 @@ All routes are versioned under `/api/v1/`.
 | `POST` | `/api/v1/login` | — | Authenticate an existing user, returns JWT |
 | `GET` | `/api/v1/users/me` | ✓ | Get current user profile |
 | `PATCH` | `/api/v1/users/me` | ✓ | Update current user's first and last name |
+| `POST` | `/api/v1/projects` | ✓ | Create a project; caller becomes its owner |
 
 ## Running tests
 
