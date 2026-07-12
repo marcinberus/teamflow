@@ -69,7 +69,16 @@ public sealed class UsersController : ControllerBase
         [FromBody] UpdateProfileCommand command,
         CancellationToken cancellationToken)
     {
-        await _mediator.Send(command, cancellationToken);
+        var result = await _mediator.Send(command, cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: ApiErrorMessages.NotFoundTitle,
+                detail: result.Error);
+        }
+
         return NoContent();
     }
 }

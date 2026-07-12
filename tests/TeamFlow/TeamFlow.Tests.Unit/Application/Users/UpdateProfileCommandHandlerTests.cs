@@ -1,11 +1,11 @@
 using FluentAssertions;
 using NSubstitute;
+using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Users.Commands.UpdateProfile;
 using TeamFlow.Application.Users.Interfaces;
 using TeamFlow.Domain.Entities;
 using TeamFlow.Domain.Enums;
-using TeamFlow.Domain.Exceptions;
 
 namespace TeamFlow.Tests.Unit.Application.Users;
 
@@ -39,8 +39,9 @@ public class UpdateProfileCommandHandlerTests
         _userRepository.GetByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(user);
         _dateTimeProvider.UtcNow.Returns(now);
 
-        await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
+        result.IsSuccess.Should().BeTrue();
         user.FirstName.Should().Be("Alicia");
         user.LastName.Should().Be("Jones");
         user.UpdatedAt.Should().Be(now);
@@ -58,13 +59,14 @@ public class UpdateProfileCommandHandlerTests
         _userRepository.GetByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(user);
         _dateTimeProvider.UtcNow.Returns(now);
 
-        await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
+        result.IsSuccess.Should().BeTrue();
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_ShouldThrowNotFoundException_WhenUserNotFound()
+    public async Task Handle_ShouldReturnFailure_WhenUserNotFound()
     {
         var userId = Guid.NewGuid();
         var command = new UpdateProfileCommand("Alicia", "Jones");
@@ -72,8 +74,9 @@ public class UpdateProfileCommandHandlerTests
         _currentUserService.UserId.Returns(userId);
         _userRepository.GetByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(null as User);
 
-        var act = () => _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(ErrorMessages.NotFound);
     }
 }
