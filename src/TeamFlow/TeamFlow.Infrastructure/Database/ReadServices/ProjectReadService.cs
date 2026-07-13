@@ -7,6 +7,31 @@ namespace TeamFlow.Infrastructure.Database.ReadServices;
 
 public sealed class ProjectReadService(ISqlConnectionFactory connectionFactory) : IProjectReadService
 {
+    public async Task<ProjectDetailsDto?> GetProjectByIdAsync(
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT
+                p.Id,
+                p.Name,
+                p.Description,
+                p.Status,
+                p.OwnerId,
+                CONCAT(u.FirstName, ' ', u.LastName) AS OwnerName,
+                p.CreatedAt,
+                p.UpdatedAt
+            FROM Projects p
+            INNER JOIN Users u ON u.Id = p.OwnerId
+            WHERE p.Id = @ProjectId;
+            """;
+
+        await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        var command = new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken);
+
+        return await connection.QuerySingleOrDefaultAsync<ProjectDetailsDto>(command);
+    }
+
     public async Task<(IReadOnlyList<ProjectSummaryDto> Items, int TotalCount)> ListProjectsAsync(
         int page,
         int pageSize,

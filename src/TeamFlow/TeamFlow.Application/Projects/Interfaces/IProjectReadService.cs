@@ -4,6 +4,10 @@ namespace TeamFlow.Application.Projects.Interfaces;
 
 public interface IProjectReadService
 {
+    Task<ProjectDetailsDto?> GetProjectByIdAsync(
+        Guid projectId,
+        CancellationToken cancellationToken);
+
     Task<(IReadOnlyList<ProjectSummaryDto> Items, int TotalCount)> ListProjectsAsync(
         int page,
         int pageSize,

@@ -71,4 +71,51 @@ public sealed class ProjectReadServiceTests : IClassFixture<TeamFlowWebAppFactor
         firstPage.Select(project => project.Id).Should().Equal(newestProject.Id, middleProject.Id);
         secondPage.Select(project => project.Id).Should().Equal(oldestProject.Id);
     }
+
+    [Fact]
+    public async Task GetProjectById_Dapper_ShouldReturnProjectDetails()
+    {
+        var createdAt = DateTimeOffset.UtcNow;
+        var updatedAt = createdAt.AddMinutes(1);
+        var owner = User.Create(
+            "project-detail-owner@example.com",
+            "hash",
+            "Alice",
+            "Smith",
+            Role.Manager,
+            createdAt);
+        var project = Project.Create("Dapper detail project", "Detailed description", owner.Id, createdAt);
+        project.ChangeStatus(ProjectStatus.Completed, updatedAt);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<TeamFlowDbContext>();
+        var readService = scope.ServiceProvider.GetRequiredService<IProjectReadService>();
+
+        dbContext.Users.Add(owner);
+        dbContext.Projects.Add(project);
+        await dbContext.SaveChangesAsync();
+
+        var result = await readService.GetProjectByIdAsync(project.Id, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(project.Id);
+        result.Name.Should().Be("Dapper detail project");
+        result.Description.Should().Be("Detailed description");
+        result.Status.Should().Be("Completed");
+        result.OwnerId.Should().Be(owner.Id);
+        result.OwnerName.Should().Be("Alice Smith");
+        result.CreatedAt.Should().Be(createdAt);
+        result.UpdatedAt.Should().Be(updatedAt);
+    }
+
+    [Fact]
+    public async Task GetProjectById_Dapper_ShouldReturnNull_WhenProjectDoesNotExist()
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var readService = scope.ServiceProvider.GetRequiredService<IProjectReadService>();
+
+        var result = await readService.GetProjectByIdAsync(Guid.NewGuid(), CancellationToken.None);
+
+        result.Should().BeNull();
+    }
 }
