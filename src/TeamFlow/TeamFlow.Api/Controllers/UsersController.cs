@@ -68,7 +68,7 @@ public sealed class UsersController : ControllerBase
         return Ok(result.Value);
     }
 
-    [HttpPatch("me")]
+    [HttpPut("me")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

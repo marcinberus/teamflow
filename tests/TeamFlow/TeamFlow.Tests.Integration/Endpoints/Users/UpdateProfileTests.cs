@@ -34,7 +34,7 @@ public sealed class UpdateProfileTests : IClassFixture<TeamFlowWebAppFactory>
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         var command = new UpdateProfileCommand("Alicia", "Jones");
-        var response = await _client.PatchAsJsonAsync($"{Paths.Users}/me", command);
+        var response = await _client.PutAsJsonAsync($"{Paths.Users}/me", command);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -47,7 +47,7 @@ public sealed class UpdateProfileTests : IClassFixture<TeamFlowWebAppFactory>
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         var command = new UpdateProfileCommand("Alicia", "Jones");
-        await _client.PatchAsJsonAsync($"{Paths.Users}/me", command);
+        await _client.PutAsJsonAsync($"{Paths.Users}/me", command);
 
         var getResponse = await _client.GetAsync($"{Paths.Users}/me");
         var profile = await getResponse.Content.ReadFromJsonAsync<UserProfileDto>();
@@ -64,7 +64,7 @@ public sealed class UpdateProfileTests : IClassFixture<TeamFlowWebAppFactory>
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         var command = new UpdateProfileCommand("", "Jones");
-        var response = await _client.PatchAsJsonAsync($"{Paths.Users}/me", command);
+        var response = await _client.PutAsJsonAsync($"{Paths.Users}/me", command);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
@@ -77,7 +77,7 @@ public sealed class UpdateProfileTests : IClassFixture<TeamFlowWebAppFactory>
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         var command = new UpdateProfileCommand("Alicia", "");
-        var response = await _client.PatchAsJsonAsync($"{Paths.Users}/me", command);
+        var response = await _client.PutAsJsonAsync($"{Paths.Users}/me", command);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
@@ -86,7 +86,7 @@ public sealed class UpdateProfileTests : IClassFixture<TeamFlowWebAppFactory>
     public async Task UpdateProfile_ShouldReturn401_WhenNotAuthenticated()
     {
         var command = new UpdateProfileCommand("Alicia", "Jones");
-        var response = await _client.PatchAsJsonAsync($"{Paths.Users}/me", command);
+        var response = await _client.PutAsJsonAsync($"{Paths.Users}/me", command);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -99,7 +99,7 @@ public sealed class UpdateProfileTests : IClassFixture<TeamFlowWebAppFactory>
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         var command = new UpdateProfileCommand(new string('A', 101), "Jones");
-        var response = await _client.PatchAsJsonAsync($"{Paths.Users}/me", command);
+        var response = await _client.PutAsJsonAsync($"{Paths.Users}/me", command);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }

@@ -78,7 +78,7 @@ All routes are versioned under `/api/v1/`.
 | `POST` | `/api/v1/users` | — | Register a new user, returns JWT |
 | `POST` | `/api/v1/login` | — | Authenticate an existing user, returns JWT |
 | `GET` | `/api/v1/users/me` | ✓ | Get current user profile |
-| `PATCH` | `/api/v1/users/me` | ✓ | Update current user's first and last name |
+| `PUT` | `/api/v1/users/me` | ✓ | Update current user's first and last name |
 | `POST` | `/api/v1/projects` | ✓ | Create a project; caller becomes its owner |
 | `GET` | `/api/v1/projects?page=1&pageSize=20&status=Active` | ✓ | List projects with pagination and an optional status filter |
 | `GET` | `/api/v1/projects/{projectId}` | ✓ | Get full project details |
