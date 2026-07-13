@@ -83,6 +83,7 @@ All routes are versioned under `/api/v1/`.
 | `GET` | `/api/v1/projects?page=1&pageSize=20&status=Active` | ✓ | List projects with pagination and an optional status filter |
 | `GET` | `/api/v1/projects/{projectId}` | ✓ | Get full project details |
 | `PUT` | `/api/v1/projects/{projectId}` | ✓ | Update a project's name and description (owner or admin) |
+| `PATCH` | `/api/v1/projects/{projectId}/status` | ✓ | Change a project's status (owner or admin) |
 
 ## Running tests
 
