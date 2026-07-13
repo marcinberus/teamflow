@@ -82,6 +82,7 @@ All routes are versioned under `/api/v1/`.
 | `POST` | `/api/v1/projects` | ✓ | Create a project; caller becomes its owner |
 | `GET` | `/api/v1/projects?page=1&pageSize=20&status=Active` | ✓ | List projects with pagination and an optional status filter |
 | `GET` | `/api/v1/projects/{projectId}` | ✓ | Get full project details |
+| `PUT` | `/api/v1/projects/{projectId}` | ✓ | Update a project's name and description (owner or admin) |
 
 ## Running tests
 

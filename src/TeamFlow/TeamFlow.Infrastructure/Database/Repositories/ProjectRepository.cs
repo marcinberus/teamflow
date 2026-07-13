@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using TeamFlow.Application.Projects.Interfaces;
 using TeamFlow.Domain.Entities;
 
@@ -9,4 +10,7 @@ public sealed class ProjectRepository(TeamFlowDbContext context) : IProjectRepos
     {
         await context.Projects.AddAsync(project, cancellationToken);
     }
+
+    public Task<Project?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
+        context.Projects.FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamFlow.Api.Middleware;
 using TeamFlow.Application.Projects.Commands.CreateProject;
+using TeamFlow.Application.Projects.Commands.UpdateProject;
 using TeamFlow.Application.Projects.DTOs;
 using TeamFlow.Application.Projects.Queries.GetProject;
 using TeamFlow.Application.Projects.Queries.ListProjects;
@@ -62,5 +63,32 @@ public sealed class ProjectsController(IMediator mediator) : ControllerBase
             nameof(Get),
             new { projectId = result.Value!.ProjectId },
             result.Value);
+    }
+
+    [HttpPut("{projectId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> Update(
+        Guid projectId,
+        [FromBody] UpdateProjectRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateProjectCommand(projectId, request.Name, request.Description);
+        var result = await mediator.Send(command, cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            var failure = ApiErrorMessages.GetFailureMapping(result.Error);
+
+            return Problem(
+                statusCode: failure.StatusCode,
+                title: failure.Title,
+                detail: result.Error);
+        }
+
+        return NoContent();
     }
 }
