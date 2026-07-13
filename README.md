@@ -80,6 +80,7 @@ All routes are versioned under `/api/v1/`.
 | `GET` | `/api/v1/users/me` | ✓ | Get current user profile |
 | `PATCH` | `/api/v1/users/me` | ✓ | Update current user's first and last name |
 | `POST` | `/api/v1/projects` | ✓ | Create a project; caller becomes its owner |
+| `GET` | `/api/v1/projects?page=1&pageSize=20&status=Active` | ✓ | List projects with pagination and an optional status filter |
 
 ## Running tests
 

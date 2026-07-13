@@ -34,6 +34,7 @@ public static class DependencyInjection
 
         services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
         services.AddScoped<IUserReadService, UserReadService>();
+        services.AddScoped<IProjectReadService, ProjectReadService>();
 
         return services;
     }
