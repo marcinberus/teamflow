@@ -56,7 +56,16 @@ public sealed class UsersController : ControllerBase
     public async Task<IActionResult> GetMyProfile(CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetMyProfileQuery(), cancellationToken);
-        return Ok(result);
+
+        if (!result.IsSuccess)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: ApiErrorMessages.NotFoundTitle,
+                detail: result.Error);
+        }
+
+        return Ok(result.Value);
     }
 
     [HttpPatch("me")]

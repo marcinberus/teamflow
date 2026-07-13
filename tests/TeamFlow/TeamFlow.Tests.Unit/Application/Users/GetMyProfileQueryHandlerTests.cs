@@ -1,10 +1,10 @@
 using FluentAssertions;
 using NSubstitute;
+using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Users.DTOs;
 using TeamFlow.Application.Users.Interfaces;
 using TeamFlow.Application.Users.Queries.GetMyProfile;
-using TeamFlow.Domain.Exceptions;
 
 namespace TeamFlow.Tests.Unit.Application.Users;
 
@@ -31,19 +31,21 @@ public class GetMyProfileQueryHandlerTests
 
         var result = await _handler.Handle(new GetMyProfileQuery(), CancellationToken.None);
 
-        result.Should().Be(profile);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(profile);
     }
 
     [Fact]
-    public async Task Handle_ShouldThrowNotFoundException_WhenUserDoesNotExist()
+    public async Task Handle_ShouldReturnFailure_WhenUserDoesNotExist()
     {
         var userId = Guid.NewGuid();
 
         _currentUserService.UserId.Returns(userId);
         _userReadService.GetProfileAsync(userId, Arg.Any<CancellationToken>()).Returns((UserProfileDto?)null);
 
-        var act = () => _handler.Handle(new GetMyProfileQuery(), CancellationToken.None);
+        var result = await _handler.Handle(new GetMyProfileQuery(), CancellationToken.None);
 
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(ErrorMessages.NotFound);
     }
 }
