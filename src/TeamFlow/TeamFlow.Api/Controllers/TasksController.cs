@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamFlow.Api.Middleware;
 using TeamFlow.Application.Tasks.Commands.CreateTask;
+using TeamFlow.Application.Tasks.Queries.ListTasks;
 
 namespace TeamFlow.Api.Controllers;
 
@@ -13,6 +14,24 @@ namespace TeamFlow.Api.Controllers;
 [ApiController]
 public sealed class TasksController(IMediator mediator) : ControllerBase
 {
+    [HttpGet]
+    [ProducesResponseType(typeof(ListTasksResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult<ListTasksResult>> List(
+        Guid projectId,
+        CancellationToken cancellationToken,
+        [FromQuery] string? status = null,
+        [FromQuery] Guid? assignedUserId = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var query = new ListTasksQuery(projectId, status, assignedUserId, page, pageSize);
+        var result = await mediator.Send(query, cancellationToken);
+
+        return Ok(result.Value);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(CreateTaskResult), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
