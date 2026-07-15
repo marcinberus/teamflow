@@ -89,6 +89,7 @@ All routes are versioned under `/api/v1/`.
 | `POST` | `/api/v1/projects/{projectId}/members` | ✓ | Assign a user to a project (owner, manager, or admin) |
 | `GET` | `/api/v1/projects/{projectId}/members` | ✓ | List assigned project members |
 | `DELETE` | `/api/v1/projects/{projectId}/members/{userId}` | ✓ | Remove a project member (owner, manager, or admin); the project owner cannot be removed |
+| `POST` | `/api/v1/projects/{projectId}/tasks` | ✓ | Create a task; caller and optional assignee must belong to the project |
 
 ## Running tests
 

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Projects.Interfaces;
+using TeamFlow.Application.Tasks.Interfaces;
 using TeamFlow.Application.Users.Interfaces;
 using TeamFlow.Infrastructure.Authentication;
 using TeamFlow.Infrastructure.Database;
@@ -31,6 +32,7 @@ public static class DependencyInjection
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
+        services.AddScoped<ITaskItemRepository, TaskItemRepository>();
 
         services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
         services.AddScoped<IUserReadService, UserReadService>();

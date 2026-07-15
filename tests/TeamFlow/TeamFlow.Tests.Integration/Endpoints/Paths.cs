@@ -8,6 +8,8 @@ internal class Paths
 
     public static string ProjectMembers(Guid projectId) => $"{Projects}/{projectId}/members";
 
+    public static string ProjectTasks(Guid projectId) => $"{Projects}/{projectId}/tasks";
+
     public static string ProjectMember(Guid projectId, Guid userId) =>
         $"{ProjectMembers(projectId)}/{userId}";
 }

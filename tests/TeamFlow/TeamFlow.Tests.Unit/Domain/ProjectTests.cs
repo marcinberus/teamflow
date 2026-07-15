@@ -101,4 +101,36 @@ public sealed class ProjectTests
         project.Status.Should().Be(ProjectStatus.OnHold);
         project.UpdatedAt.Should().Be(later);
     }
+
+    [Fact]
+    public void Project_HasMember_ShouldReturnTrue_ForOwnerAndAssignedMember()
+    {
+        var ownerId = Guid.NewGuid();
+        var memberId = Guid.NewGuid();
+        var project = Project.Create("Apollo", "Moon landing", ownerId, Now);
+        project.AssignMember(memberId, Role.Developer, Now);
+
+        project.HasMember(ownerId).Should().BeTrue();
+        project.HasMember(memberId).Should().BeTrue();
+        project.HasMember(Guid.NewGuid()).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Project_AddTask_ShouldAddTaskWithExpectedInitialState()
+    {
+        var project = Project.Create("Apollo", "Moon landing", Guid.NewGuid(), Now);
+        var assignedUserId = Guid.NewGuid();
+        var dueDate = Now.AddDays(1);
+
+        var task = project.AddTask("Design API", "Define endpoints", assignedUserId, dueDate, Now);
+
+        project.Tasks.Should().ContainSingle().Which.Should().BeSameAs(task);
+        task.ProjectId.Should().Be(project.Id);
+        task.Title.Should().Be("Design API");
+        task.Description.Should().Be("Define endpoints");
+        task.AssignedUserId.Should().Be(assignedUserId);
+        task.DueDate.Should().Be(dueDate);
+        task.Status.Should().Be(TaskItemStatus.Todo);
+        task.CreatedAt.Should().Be(Now);
+    }
 }

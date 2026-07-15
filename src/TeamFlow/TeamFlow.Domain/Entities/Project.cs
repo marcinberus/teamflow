@@ -49,6 +49,11 @@ public sealed class Project : Entity
             || userRole is Role.Manager or Role.Admin;
     }
 
+    public bool HasMember(Guid userId)
+    {
+        return OwnerId == userId || _members.Any(member => member.UserId == userId);
+    }
+
     public void RemoveMember(Guid userId)
     {
         if (userId == OwnerId)
