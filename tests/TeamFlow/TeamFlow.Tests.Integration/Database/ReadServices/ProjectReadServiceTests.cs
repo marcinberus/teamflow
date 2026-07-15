@@ -17,7 +17,7 @@ public sealed class ProjectReadServiceTests : IClassFixture<TeamFlowWebAppFactor
     }
 
     [Fact]
-    public async Task ListProjects_Dapper_ShouldReturnCorrectCounts()
+    public async Task ListProjects_ShouldReturnCorrectCounts()
     {
         var now = DateTimeOffset.UtcNow;
         var owner = User.Create("project-read-owner@example.com", "hash", "Alice", "Smith", Role.Manager, now);
@@ -47,7 +47,7 @@ public sealed class ProjectReadServiceTests : IClassFixture<TeamFlowWebAppFactor
     }
 
     [Fact]
-    public async Task ListProjects_Dapper_ShouldReturnRequestedPage()
+    public async Task ListProjects_ShouldReturnRequestedPage()
     {
         var now = DateTimeOffset.UtcNow;
         var owner = User.Create("project-pagination-owner@example.com", "hash", "Alice", "Smith", Role.Manager, now);
@@ -73,7 +73,7 @@ public sealed class ProjectReadServiceTests : IClassFixture<TeamFlowWebAppFactor
     }
 
     [Fact]
-    public async Task GetProjectById_Dapper_ShouldReturnProjectDetails()
+    public async Task GetProjectById_ShouldReturnProjectDetails()
     {
         var createdAt = DateTimeOffset.UtcNow;
         var updatedAt = createdAt.AddMinutes(1);
@@ -109,7 +109,7 @@ public sealed class ProjectReadServiceTests : IClassFixture<TeamFlowWebAppFactor
     }
 
     [Fact]
-    public async Task GetProjectById_Dapper_ShouldReturnNull_WhenProjectDoesNotExist()
+    public async Task GetProjectById_ShouldReturnNull_WhenProjectDoesNotExist()
     {
         await using var scope = _factory.Services.CreateAsyncScope();
         var readService = scope.ServiceProvider.GetRequiredService<IProjectReadService>();

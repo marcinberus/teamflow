@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamFlow.Api.Middleware;
 using TeamFlow.Application.Projects.Commands.AssignMember;
+using TeamFlow.Application.Projects.Queries.ListProjectMembers;
 
 namespace TeamFlow.Api.Controllers;
 
@@ -13,6 +14,21 @@ namespace TeamFlow.Api.Controllers;
 [ApiController]
 public sealed class ProjectMembersController(IMediator mediator) : ControllerBase
 {
+    [HttpGet]
+    [ProducesResponseType(typeof(ListProjectMembersResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> List(
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new ListProjectMembersQuery(projectId),
+            cancellationToken);
+
+        return Ok(result.Value);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(AssignMemberResult), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

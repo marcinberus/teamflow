@@ -75,4 +75,35 @@ public sealed class ProjectReadService(ISqlConnectionFactory connectionFactory) 
 
         return (items, totalCount);
     }
+
+    public async Task<IReadOnlyList<ProjectMemberDto>> ListMembersAsync(
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT
+                pm.Id AS MemberId,
+                u.Id AS UserId,
+                u.Email,
+                u.FirstName,
+                u.LastName,
+                u.Role,
+                pm.Role AS ProjectRole,
+                pm.CreatedAt AS JoinedAt
+            FROM ProjectMembers pm
+            INNER JOIN Users u ON u.Id = pm.UserId
+            WHERE pm.ProjectId = @ProjectId
+            ORDER BY pm.CreatedAt, pm.Id;
+            """;
+
+        await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        var command = new CommandDefinition(
+            sql,
+            new { ProjectId = projectId },
+            cancellationToken: cancellationToken);
+
+        var members = await connection.QueryAsync<ProjectMemberDto>(command);
+
+        return members.AsList();
+    }
 }

@@ -13,4 +13,8 @@ public interface IProjectReadService
         int pageSize,
         string? status,
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<ProjectMemberDto>> ListMembersAsync(
+        Guid projectId,
+        CancellationToken cancellationToken);
 }

@@ -6,6 +6,7 @@
 
 - **ASP.NET Core 9** — Web API
 - **EF Core 9** — write side (repositories, Unit of Work)
+- **Dapper** — read-side SQL projections
 - **SQL Server / LocalDB** — database
 - **MediatR** — CQRS (commands and queries)
 - **FluentValidation** — input validation via pipeline behavior
@@ -86,6 +87,7 @@ All routes are versioned under `/api/v1/`.
 | `PATCH` | `/api/v1/projects/{projectId}/status` | ✓ | Change a project's status (owner or admin) |
 | `DELETE` | `/api/v1/projects/{projectId}` | ✓ | Permanently delete a project (owner or admin) |
 | `POST` | `/api/v1/projects/{projectId}/members` | ✓ | Assign a user to a project (owner, manager, or admin) |
+| `GET` | `/api/v1/projects/{projectId}/members` | ✓ | List assigned project members |
 
 ## Running tests
 
