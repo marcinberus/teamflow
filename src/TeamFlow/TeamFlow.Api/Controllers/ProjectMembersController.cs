@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamFlow.Api.Middleware;
 using TeamFlow.Application.Projects.Commands.AssignMember;
+using TeamFlow.Application.Projects.Commands.RemoveMember;
 using TeamFlow.Application.Projects.Queries.ListProjectMembers;
 
 namespace TeamFlow.Api.Controllers;
@@ -57,5 +58,34 @@ public sealed class ProjectMembersController(IMediator mediator) : ControllerBas
         var memberUrl = $"/api/v1/projects/{projectId}/members/{result.Value!.MemberId}";
 
         return Created(memberUrl, result.Value);
+    }
+
+    [HttpDelete("{userId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> Remove(
+        Guid projectId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new RemoveMemberCommand(projectId, userId),
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            var failure = ApiErrorMessages.GetFailureMapping(result.Error);
+
+            return Problem(
+                statusCode: failure.StatusCode,
+                title: failure.Title,
+                detail: result.Error);
+        }
+
+        return NoContent();
     }
 }

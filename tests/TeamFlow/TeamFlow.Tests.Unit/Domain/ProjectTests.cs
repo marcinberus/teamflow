@@ -68,6 +68,29 @@ public sealed class ProjectTests
     }
 
     [Fact]
+    public void Project_RemoveMember_ShouldRemoveMember_WhenMemberExists()
+    {
+        var project = Project.Create("Apollo", "Moon landing", Guid.NewGuid(), Now);
+        var userId = Guid.NewGuid();
+        project.AssignMember(userId, Role.Developer, Now);
+
+        project.RemoveMember(userId);
+
+        project.Members.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Project_RemoveMember_ShouldThrow_WhenUserIsProjectOwner()
+    {
+        var ownerId = Guid.NewGuid();
+        var project = Project.Create("Apollo", "Moon landing", ownerId, Now);
+
+        var act = () => project.RemoveMember(ownerId);
+
+        act.Should().Throw<ConflictException>();
+    }
+
+    [Fact]
     public void Project_ChangeStatus_ShouldUpdateStatusAndTimestamp()
     {
         var project = Project.Create("Apollo", "Moon landing", Guid.NewGuid(), Now);

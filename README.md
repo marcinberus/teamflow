@@ -88,6 +88,7 @@ All routes are versioned under `/api/v1/`.
 | `DELETE` | `/api/v1/projects/{projectId}` | ✓ | Permanently delete a project (owner or admin) |
 | `POST` | `/api/v1/projects/{projectId}/members` | ✓ | Assign a user to a project (owner, manager, or admin) |
 | `GET` | `/api/v1/projects/{projectId}/members` | ✓ | List assigned project members |
+| `DELETE` | `/api/v1/projects/{projectId}/members/{userId}` | ✓ | Remove a project member (owner, manager, or admin); the project owner cannot be removed |
 
 ## Running tests
 

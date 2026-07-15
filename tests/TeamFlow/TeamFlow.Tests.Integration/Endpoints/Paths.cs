@@ -7,4 +7,7 @@ internal class Paths
     public const string Projects = "/api/v1/projects";
 
     public static string ProjectMembers(Guid projectId) => $"{Projects}/{projectId}/members";
+
+    public static string ProjectMember(Guid projectId, Guid userId) =>
+        $"{ProjectMembers(projectId)}/{userId}";
 }
