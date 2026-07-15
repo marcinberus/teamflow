@@ -13,4 +13,11 @@ public sealed class ProjectRepository(TeamFlowDbContext context) : IProjectRepos
 
     public Task<Project?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         context.Projects.FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
+
+    public Task DeleteAsync(Project project, CancellationToken cancellationToken)
+    {
+        context.Projects.Remove(project);
+
+        return Task.CompletedTask;
+    }
 }

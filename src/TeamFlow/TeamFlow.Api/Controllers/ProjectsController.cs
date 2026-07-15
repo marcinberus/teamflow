@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using TeamFlow.Api.Middleware;
 using TeamFlow.Application.Projects.Commands.ChangeProjectStatus;
 using TeamFlow.Application.Projects.Commands.CreateProject;
+using TeamFlow.Application.Projects.Commands.DeleteProject;
 using TeamFlow.Application.Projects.Commands.UpdateProject;
 using TeamFlow.Application.Projects.DTOs;
 using TeamFlow.Application.Projects.Queries.GetProject;
@@ -106,6 +107,29 @@ public sealed class ProjectsController(IMediator mediator) : ControllerBase
     {
         var command = new ChangeProjectStatusCommand(projectId, request.Status);
         var result = await mediator.Send(command, cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            var failure = ApiErrorMessages.GetFailureMapping(result.Error);
+
+            return Problem(
+                statusCode: failure.StatusCode,
+                title: failure.Title,
+                detail: result.Error);
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("{projectId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> Delete(Guid projectId, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new DeleteProjectCommand(projectId), cancellationToken);
 
         if (!result.IsSuccess)
         {
