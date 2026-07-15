@@ -11,8 +11,18 @@ public sealed class ProjectRepository(TeamFlowDbContext context) : IProjectRepos
         await context.Projects.AddAsync(project, cancellationToken);
     }
 
+    public async Task AddMemberAsync(ProjectMember member, CancellationToken cancellationToken)
+    {
+        await context.ProjectMembers.AddAsync(member, cancellationToken);
+    }
+
     public Task<Project?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         context.Projects.FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
+
+    public Task<Project?> GetByIdWithMembersAsync(Guid id, CancellationToken cancellationToken) =>
+        context.Projects
+            .Include(project => project.Members)
+            .FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
 
     public Task DeleteAsync(Project project, CancellationToken cancellationToken)
     {
