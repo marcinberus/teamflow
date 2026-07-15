@@ -109,6 +109,31 @@ public sealed class AssignMemberCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_ShouldReturnForbidden_WhenCurrentUserRoleIsInvalid()
+    {
+        var project = Project.Create(
+            "Apollo",
+            "Landing mission",
+            Guid.NewGuid(),
+            DateTimeOffset.UtcNow);
+
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+        _currentUserService.Role.Returns("Unknown");
+        _projectRepository.GetByIdWithMembersAsync(project.Id, Arg.Any<CancellationToken>())
+            .Returns(project);
+
+        var result = await _handler.Handle(
+            new AssignMemberCommand(project.Id, Guid.NewGuid(), "Developer"),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be(ErrorMessages.Forbidden);
+        await _userRepository.DidNotReceive()
+            .GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Handle_ShouldReturnNotFound_WhenTargetUserDoesNotExist()
     {
         var ownerId = Guid.NewGuid();

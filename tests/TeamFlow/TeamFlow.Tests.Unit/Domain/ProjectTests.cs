@@ -32,6 +32,31 @@ public sealed class ProjectTests
         act.Should().Throw<ConflictException>();
     }
 
+    [Theory]
+    [InlineData(Role.Developer)]
+    [InlineData(Role.Manager)]
+    [InlineData(Role.Admin)]
+    public void Project_CanAssignMembers_ShouldReturnTrue_WhenUserIsOwner(Role userRole)
+    {
+        var ownerId = Guid.NewGuid();
+        var project = Project.Create("Apollo", "Landing mission", ownerId, Now);
+
+        project.CanAssignMembers(ownerId, userRole).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(Role.Developer, false)]
+    [InlineData(Role.Manager, true)]
+    [InlineData(Role.Admin, true)]
+    public void Project_CanAssignMembers_ShouldReturnExpectedResult_WhenUserIsNotOwner(
+        Role userRole,
+        bool expected)
+    {
+        var project = Project.Create("Apollo", "Landing mission", Guid.NewGuid(), Now);
+
+        project.CanAssignMembers(Guid.NewGuid(), userRole).Should().Be(expected);
+    }
+
     [Fact]
     public void Project_RemoveMember_ShouldThrow_WhenMemberNotFound()
     {

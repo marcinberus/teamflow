@@ -29,11 +29,15 @@ public sealed class AssignMemberCommandHandler(
             return Result<AssignMemberResult>.Failure(ErrorMessages.NotFound);
         }
 
-        var canAssignMembers = project.OwnerId == currentUserService.UserId
-            || string.Equals(currentUserService.Role, nameof(Role.Manager), StringComparison.OrdinalIgnoreCase)
-            || string.Equals(currentUserService.Role, nameof(Role.Admin), StringComparison.OrdinalIgnoreCase);
+        Role? currentUserRole = Enum.TryParse<Role>(
+            currentUserService.Role,
+            ignoreCase: true,
+            out var parsedCurrentUserRole)
+            && Enum.IsDefined(parsedCurrentUserRole)
+                ? parsedCurrentUserRole
+                : null;
 
-        if (!canAssignMembers)
+        if (!project.CanAssignMembers(currentUserService.UserId, currentUserRole))
         {
             return Result<AssignMemberResult>.Failure(ErrorMessages.Forbidden);
         }

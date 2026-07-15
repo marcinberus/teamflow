@@ -43,6 +43,12 @@ public sealed class Project : Entity
         _members.Add(ProjectMember.Create(Id, userId, role, now));
     }
 
+    public bool CanAssignMembers(Guid userId, Role? userRole)
+    {
+        return OwnerId == userId
+            || userRole is Role.Manager or Role.Admin;
+    }
+
     public void RemoveMember(Guid userId)
     {
         if (userId == OwnerId)
