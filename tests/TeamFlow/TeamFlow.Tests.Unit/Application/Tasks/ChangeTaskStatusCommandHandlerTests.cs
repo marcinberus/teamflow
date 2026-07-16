@@ -48,7 +48,7 @@ public sealed class ChangeTaskStatusCommandHandlerTests
         _dateTimeProvider.UtcNow.Returns(updatedAt);
 
         var result = await _handler.Handle(
-            new ChangeTaskStatusCommand(project.Id, task.Id, "done"),
+            new ChangeTaskStatusCommand(project.Id, task.Id, "Done"),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();

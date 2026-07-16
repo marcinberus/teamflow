@@ -18,7 +18,7 @@ public sealed class ChangeProjectStatusCommandHandler(
         ChangeProjectStatusCommand request,
         CancellationToken cancellationToken)
     {
-        var newStatus = Enum.Parse<ProjectStatus>(request.Status, ignoreCase: true);
+        var newStatus = Enum.Parse<ProjectStatus>(request.Status);
         var project = await projectRepository.GetByIdAsync(request.ProjectId, cancellationToken);
 
         if (project is null)
@@ -29,7 +29,7 @@ public sealed class ChangeProjectStatusCommandHandler(
         var isAdmin = string.Equals(
             currentUserService.Role,
             nameof(Role.Admin),
-            StringComparison.OrdinalIgnoreCase);
+            StringComparison.Ordinal);
 
         if (project.OwnerId != currentUserService.UserId && !isAdmin)
         {

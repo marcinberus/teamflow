@@ -28,7 +28,6 @@ public sealed class RemoveMemberCommandHandler(
 
         Role? currentUserRole = Enum.TryParse<Role>(
             currentUserService.Role,
-            ignoreCase: true,
             out var parsedCurrentUserRole)
             && Enum.IsDefined(parsedCurrentUserRole)
                 ? parsedCurrentUserRole

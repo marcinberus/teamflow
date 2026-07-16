@@ -1,4 +1,5 @@
 using FluentValidation;
+using TeamFlow.Application.Common.Validation;
 using TeamFlow.Domain.Enums;
 
 namespace TeamFlow.Application.Projects.Commands.AssignMember;
@@ -17,7 +18,7 @@ public sealed class AssignMemberCommandValidator : AbstractValidator<AssignMembe
 
         RuleFor(command => command.ProjectRole)
             .NotEmpty()
-            .Must(role => ValidRoles.Contains(role))
+            .Must(EnumValidation.IsDefinedValue<Role>)
             .WithMessage($"Role must be one of: {string.Join(", ", ValidRoles)}.");
     }
 }

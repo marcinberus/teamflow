@@ -29,6 +29,7 @@ public sealed class AssignMemberCommandValidatorTests
     [Theory]
     [InlineData("")]
     [InlineData("1")]
+    [InlineData("developer")]
     [InlineData("Contributor")]
     public void Validate_ShouldFail_WhenRoleIsInvalid(string role)
     {

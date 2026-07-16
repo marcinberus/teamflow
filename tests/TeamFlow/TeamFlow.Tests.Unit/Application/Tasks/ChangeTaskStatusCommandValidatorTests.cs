@@ -10,7 +10,7 @@ public sealed class ChangeTaskStatusCommandValidatorTests
     [Theory]
     [InlineData("Todo")]
     [InlineData("InProgress")]
-    [InlineData("verification")]
+    [InlineData("Verification")]
     [InlineData("Done")]
     [InlineData("Cancelled")]
     public void Validate_ShouldSucceed_WhenStatusIsValid(string status)
@@ -24,6 +24,7 @@ public sealed class ChangeTaskStatusCommandValidatorTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
+    [InlineData("verification")]
     [InlineData("Unknown")]
     [InlineData("999")]
     public void Validate_ShouldFail_WhenStatusIsInvalid(string status)

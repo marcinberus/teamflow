@@ -1,4 +1,5 @@
 using FluentValidation;
+using TeamFlow.Application.Common.Validation;
 using TeamFlow.Domain.Enums;
 
 namespace TeamFlow.Application.Users.Commands.RegisterUser;
@@ -32,7 +33,7 @@ public sealed class RegisterUserCommandValidator : AbstractValidator<RegisterUse
 
         RuleFor(x => x.Role)
             .NotEmpty()
-            .Must(r => ValidRoles.Contains(r))
+            .Must(EnumValidation.IsDefinedValue<Role>)
             .WithMessage($"Role must be one of: {string.Join(", ", ValidRoles)}.");
     }
 }

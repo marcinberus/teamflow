@@ -10,7 +10,7 @@ public sealed class ChangeProjectStatusCommandValidatorTests
     [Theory]
     [InlineData("Active")]
     [InlineData("OnHold")]
-    [InlineData("completed")]
+    [InlineData("Completed")]
     public void Validate_ShouldSucceed_WhenStatusIsValid(string status)
     {
         var result = _validator.Validate(
@@ -21,6 +21,7 @@ public sealed class ChangeProjectStatusCommandValidatorTests
 
     [Theory]
     [InlineData("")]
+    [InlineData("completed")]
     [InlineData("Unknown")]
     [InlineData("999")]
     public void Validate_ShouldFail_WhenStatusIsInvalid(string status)

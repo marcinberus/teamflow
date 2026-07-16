@@ -27,7 +27,7 @@ public sealed class DeleteProjectCommandHandler(
         var isAdmin = string.Equals(
             currentUserService.Role,
             nameof(Role.Admin),
-            StringComparison.OrdinalIgnoreCase);
+            StringComparison.Ordinal);
 
         if (project.OwnerId != currentUserService.UserId && !isAdmin)
         {

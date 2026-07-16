@@ -28,7 +28,7 @@ public sealed class UpdateProjectCommandHandler(
         var isAdmin = string.Equals(
             currentUserService.Role,
             nameof(Role.Admin),
-            StringComparison.OrdinalIgnoreCase);
+            StringComparison.Ordinal);
 
         if (project.OwnerId != currentUserService.UserId && !isAdmin)
         {

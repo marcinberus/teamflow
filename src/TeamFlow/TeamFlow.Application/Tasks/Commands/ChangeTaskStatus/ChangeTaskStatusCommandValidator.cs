@@ -1,4 +1,5 @@
 using FluentValidation;
+using TeamFlow.Application.Common.Validation;
 using TeamFlow.Domain.Enums;
 
 namespace TeamFlow.Application.Tasks.Commands.ChangeTaskStatus;
@@ -15,13 +16,7 @@ public sealed class ChangeTaskStatusCommandValidator : AbstractValidator<ChangeT
 
         RuleFor(command => command.Status)
             .NotEmpty()
-            .Must(BeValidTaskStatus)
+            .Must(EnumValidation.IsDefinedValue<TaskItemStatus>)
             .WithMessage("Status must be a valid task status.");
-    }
-
-    private static bool BeValidTaskStatus(string status)
-    {
-        return Enum.TryParse<TaskItemStatus>(status, ignoreCase: true, out var parsedStatus)
-            && Enum.IsDefined(parsedStatus);
     }
 }

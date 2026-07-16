@@ -31,7 +31,6 @@ public sealed class AssignMemberCommandHandler(
 
         Role? currentUserRole = Enum.TryParse<Role>(
             currentUserService.Role,
-            ignoreCase: true,
             out var parsedCurrentUserRole)
             && Enum.IsDefined(parsedCurrentUserRole)
                 ? parsedCurrentUserRole
@@ -49,7 +48,7 @@ public sealed class AssignMemberCommandHandler(
             return Result<AssignMemberResult>.Failure(ErrorMessages.NotFound);
         }
 
-        var role = Enum.Parse<Role>(request.ProjectRole, ignoreCase: true);
+        var role = Enum.Parse<Role>(request.ProjectRole);
         project.AssignMember(user.Id, role, dateTimeProvider.UtcNow);
         var member = project.Members.Single(item => item.UserId == user.Id);
 

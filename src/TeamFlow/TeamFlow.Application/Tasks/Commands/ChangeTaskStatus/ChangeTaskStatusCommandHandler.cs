@@ -41,7 +41,7 @@ public sealed class ChangeTaskStatusCommandHandler(
             return Result<ChangeTaskStatusResult>.Failure(ErrorMessages.NotFound);
         }
 
-        var newStatus = Enum.Parse<TaskItemStatus>(request.Status, ignoreCase: true);
+        var newStatus = Enum.Parse<TaskItemStatus>(request.Status);
         taskItem.ChangeStatus(newStatus, dateTimeProvider.UtcNow);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
