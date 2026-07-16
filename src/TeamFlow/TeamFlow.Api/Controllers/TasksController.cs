@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamFlow.Api.Middleware;
+using TeamFlow.Application.Tasks.Commands.ChangeTaskStatus;
 using TeamFlow.Application.Tasks.Commands.CreateTask;
 using TeamFlow.Application.Tasks.Commands.UpdateTask;
 using TeamFlow.Application.Tasks.Queries.ListTasks;
@@ -86,6 +87,34 @@ public sealed class TasksController(IMediator mediator) : ControllerBase
             request.Description,
             request.AssignedUserId,
             request.DueDate);
+        var result = await mediator.Send(command, cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            var failure = ApiErrorMessages.GetFailureMapping(result.Error);
+
+            return Problem(
+                statusCode: failure.StatusCode,
+                title: failure.Title,
+                detail: result.Error);
+        }
+
+        return NoContent();
+    }
+
+    [HttpPatch("{taskId:guid}/status")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> ChangeStatus(
+        Guid projectId,
+        Guid taskId,
+        [FromBody] ChangeTaskStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new ChangeTaskStatusCommand(projectId, taskId, request.Status);
         var result = await mediator.Send(command, cancellationToken);
 
         if (!result.IsSuccess)

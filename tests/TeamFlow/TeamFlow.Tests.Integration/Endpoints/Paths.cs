@@ -13,6 +13,9 @@ internal class Paths
     public static string ProjectTask(Guid projectId, Guid taskId) =>
         $"{ProjectTasks(projectId)}/{taskId}";
 
+    public static string ProjectTaskStatus(Guid projectId, Guid taskId) =>
+        $"{ProjectTask(projectId, taskId)}/status";
+
     public static string ProjectMember(Guid projectId, Guid userId) =>
         $"{ProjectMembers(projectId)}/{userId}";
 }
