@@ -1,4 +1,6 @@
+using System.Globalization;
 using Dapper;
+using TeamFlow.Domain.Enums;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Projects.DTOs;
 using TeamFlow.Application.Projects.Interfaces;
@@ -7,6 +9,64 @@ namespace TeamFlow.Infrastructure.Database.ReadServices;
 
 public sealed class ProjectReadService(ISqlConnectionFactory connectionFactory) : IProjectReadService
 {
+    public async Task<ProjectStatisticsDto?> GetStatisticsAsync(
+        Guid projectId,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT Id
+            FROM Projects
+            WHERE Id = @ProjectId;
+
+            SELECT Status, COUNT(*) AS Count
+            FROM Tasks
+            WHERE ProjectId = @ProjectId
+            GROUP BY Status;
+
+            SELECT COUNT(*)
+            FROM ProjectMembers
+            WHERE ProjectId = @ProjectId;
+            """;
+
+        await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        var command = new CommandDefinition(
+            sql,
+            new { ProjectId = projectId },
+            cancellationToken: cancellationToken);
+        using var results = await connection.QueryMultipleAsync(command);
+
+        var existingProjectId = await results.ReadSingleOrDefaultAsync<Guid>();
+        var taskStatusCounts = await results.ReadAsync<TaskStatusCount>();
+        var totalMembers = await results.ReadSingleAsync<int>();
+
+        if (existingProjectId == Guid.Empty)
+        {
+            return null;
+        }
+
+        var tasksByStatus = Enum.GetNames<TaskItemStatus>()
+            .ToDictionary(status => status, _ => 0, StringComparer.Ordinal);
+
+        foreach (var statusCount in taskStatusCounts)
+        {
+            tasksByStatus[statusCount.Status] = statusCount.Count;
+        }
+
+        var totalTasks = tasksByStatus.Values.Sum();
+        var doneTasks = tasksByStatus.GetValueOrDefault("Done");
+        var completionPercentage = totalTasks == 0
+            ? 0d
+            : (double)doneTasks / totalTasks * 100;
+        var formattedCompletionPercentage = completionPercentage.ToString("F2", CultureInfo.InvariantCulture);
+
+        return new ProjectStatisticsDto(
+            existingProjectId,
+            totalTasks,
+            tasksByStatus,
+            totalMembers,
+            formattedCompletionPercentage);
+    }
+
     public async Task<ProjectDetailsDto?> GetProjectByIdAsync(
         Guid projectId,
         CancellationToken cancellationToken)
@@ -105,5 +165,12 @@ public sealed class ProjectReadService(ISqlConnectionFactory connectionFactory) 
         var members = await connection.QueryAsync<ProjectMemberDto>(command);
 
         return members.AsList();
+    }
+
+    private sealed class TaskStatusCount
+    {
+        public string Status { get; init; } = string.Empty;
+
+        public int Count { get; init; }
     }
 }

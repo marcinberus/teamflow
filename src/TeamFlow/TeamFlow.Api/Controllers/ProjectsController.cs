@@ -9,6 +9,7 @@ using TeamFlow.Application.Projects.Commands.DeleteProject;
 using TeamFlow.Application.Projects.Commands.UpdateProject;
 using TeamFlow.Application.Projects.DTOs;
 using TeamFlow.Application.Projects.Queries.GetProject;
+using TeamFlow.Application.Projects.Queries.GetProjectStatistics;
 using TeamFlow.Application.Projects.Queries.ListProjects;
 
 namespace TeamFlow.Api.Controllers;
@@ -39,6 +40,26 @@ public sealed class ProjectsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid projectId, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetProjectQuery(projectId), cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: ApiErrorMessages.NotFoundTitle,
+                detail: result.Error);
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("{projectId:guid}/statistics")]
+    [ProducesResponseType(typeof(ProjectStatisticsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> GetStatistics(Guid projectId, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetProjectStatisticsQuery(projectId), cancellationToken);
 
         if (!result.IsSuccess)
         {

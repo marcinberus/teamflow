@@ -17,4 +17,8 @@ public interface IProjectReadService
     Task<IReadOnlyList<ProjectMemberDto>> ListMembersAsync(
         Guid projectId,
         CancellationToken cancellationToken);
+
+    Task<ProjectStatisticsDto?> GetStatisticsAsync(
+        Guid projectId,
+        CancellationToken cancellationToken);
 }
