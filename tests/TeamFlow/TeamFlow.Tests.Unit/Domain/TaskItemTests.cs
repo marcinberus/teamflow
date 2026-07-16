@@ -19,4 +19,21 @@ public sealed class TaskItemTests
         task.Status.Should().Be(TaskItemStatus.InProgress);
         task.UpdatedAt.Should().Be(later);
     }
+
+    [Fact]
+    public void TaskItem_Update_ShouldUpdateEditableFields()
+    {
+        var assigneeId = Guid.NewGuid();
+        var dueDate = Now.AddDays(2);
+        var later = Now.AddHours(1);
+        var task = TaskItem.Create(Guid.NewGuid(), "Design API", "Details", null, null, Now);
+
+        task.Update("Design REST API", "Updated details", assigneeId, dueDate, later);
+
+        task.Title.Should().Be("Design REST API");
+        task.Description.Should().Be("Updated details");
+        task.AssignedUserId.Should().Be(assigneeId);
+        task.DueDate.Should().Be(dueDate);
+        task.UpdatedAt.Should().Be(later);
+    }
 }

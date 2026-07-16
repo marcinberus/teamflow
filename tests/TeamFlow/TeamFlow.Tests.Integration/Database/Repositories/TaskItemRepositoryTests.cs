@@ -77,6 +77,43 @@ public sealed class TaskItemRepositoryTests : IClassFixture<DatabaseFixture>, IA
         persistedTask.CreatedAt.Should().Be(now);
     }
 
+    [Fact]
+    public async Task GetByIdAsync_ShouldLoadTaskAndPersistUpdates()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var updatedAt = now.AddHours(1);
+        var owner = CreateUser($"task-update-owner-{Guid.NewGuid():N}@example.com", now);
+        var project = Project.Create("Apollo", "Landing mission", owner.Id, now);
+        var task = TaskItem.Create(
+            project.Id,
+            "Design API",
+            "Define endpoints",
+            owner.Id,
+            now.AddDays(1),
+            now);
+        _db.Users.Add(owner);
+        _db.Projects.Add(project);
+        _db.Tasks.Add(task);
+        await _db.SaveChangesAsync();
+        _db.ChangeTracker.Clear();
+
+        var loadedTask = await _taskItemRepository.GetByIdAsync(task.Id, CancellationToken.None);
+        loadedTask.Should().NotBeNull();
+        loadedTask!.Update("Design REST API", "Updated endpoints", null, null, updatedAt);
+        await _unitOfWork.SaveChangesAsync(CancellationToken.None);
+        _db.ChangeTracker.Clear();
+
+        var persistedTask = await _db.Tasks
+            .AsNoTracking()
+            .SingleAsync(item => item.Id == task.Id);
+
+        persistedTask.Title.Should().Be("Design REST API");
+        persistedTask.Description.Should().Be("Updated endpoints");
+        persistedTask.AssignedUserId.Should().BeNull();
+        persistedTask.DueDate.Should().BeNull();
+        persistedTask.UpdatedAt.Should().Be(updatedAt);
+    }
+
     private static User CreateUser(string email, DateTimeOffset now) =>
         User.Create(email, "hash", "Test", "User", Role.Developer, now);
 }

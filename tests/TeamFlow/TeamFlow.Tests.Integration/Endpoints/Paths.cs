@@ -1,4 +1,4 @@
-﻿namespace TeamFlow.Tests.Integration.Endpoints;
+namespace TeamFlow.Tests.Integration.Endpoints;
 
 internal class Paths
 {
@@ -9,6 +9,9 @@ internal class Paths
     public static string ProjectMembers(Guid projectId) => $"{Projects}/{projectId}/members";
 
     public static string ProjectTasks(Guid projectId) => $"{Projects}/{projectId}/tasks";
+
+    public static string ProjectTask(Guid projectId, Guid taskId) =>
+        $"{ProjectTasks(projectId)}/{taskId}";
 
     public static string ProjectMember(Guid projectId, Guid userId) =>
         $"{ProjectMembers(projectId)}/{userId}";

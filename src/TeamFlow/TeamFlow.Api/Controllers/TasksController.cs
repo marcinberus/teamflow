@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamFlow.Api.Middleware;
 using TeamFlow.Application.Tasks.Commands.CreateTask;
+using TeamFlow.Application.Tasks.Commands.UpdateTask;
 using TeamFlow.Application.Tasks.Queries.ListTasks;
 
 namespace TeamFlow.Api.Controllers;
@@ -64,5 +65,39 @@ public sealed class TasksController(IMediator mediator) : ControllerBase
         var taskUrl = $"/api/v1/projects/{projectId}/tasks/{result.Value!.TaskId}";
 
         return Created(taskUrl, result.Value);
+    }
+
+    [HttpPut("{taskId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> Update(
+        Guid projectId,
+        Guid taskId,
+        [FromBody] UpdateTaskRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateTaskCommand(
+            projectId,
+            taskId,
+            request.Title,
+            request.Description,
+            request.AssignedUserId,
+            request.DueDate);
+        var result = await mediator.Send(command, cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            var failure = ApiErrorMessages.GetFailureMapping(result.Error);
+
+            return Problem(
+                statusCode: failure.StatusCode,
+                title: failure.Title,
+                detail: result.Error);
+        }
+
+        return NoContent();
     }
 }
