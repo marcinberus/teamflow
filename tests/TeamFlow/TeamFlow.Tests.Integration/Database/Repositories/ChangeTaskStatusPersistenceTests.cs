@@ -8,7 +8,8 @@ using TeamFlow.Infrastructure.Database.Repositories;
 
 namespace TeamFlow.Tests.Integration.Database.Repositories;
 
-public sealed class ChangeTaskStatusPersistenceTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
+[Collection(IntegrationTestCollection.Name)]
+public sealed class ChangeTaskStatusPersistenceTests : IntegrationTestBase
 {
     private readonly DatabaseFixture _fixture;
     private TeamFlowDbContext _db = null!;
@@ -16,13 +17,14 @@ public sealed class ChangeTaskStatusPersistenceTests : IClassFixture<DatabaseFix
     private TaskItemRepository _taskItemRepository = null!;
     private UnitOfWork _unitOfWork = null!;
 
-    public ChangeTaskStatusPersistenceTests(DatabaseFixture fixture)
+    public ChangeTaskStatusPersistenceTests(IntegrationTestFixture fixture) : base(fixture)
     {
-        _fixture = fixture;
+        _fixture = fixture.Database;
     }
 
-    public async Task InitializeAsync()
+    public override async Task InitializeAsync()
     {
+        await base.InitializeAsync();
         var options = new DbContextOptionsBuilder<TeamFlowDbContext>()
             .UseSqlServer(_fixture.ConnectionString)
             .Options;
@@ -33,7 +35,7 @@ public sealed class ChangeTaskStatusPersistenceTests : IClassFixture<DatabaseFix
         _unitOfWork = new UnitOfWork(_db);
     }
 
-    public async Task DisposeAsync()
+    public override async Task DisposeAsync()
     {
         await _transaction.RollbackAsync();
         await _db.DisposeAsync();

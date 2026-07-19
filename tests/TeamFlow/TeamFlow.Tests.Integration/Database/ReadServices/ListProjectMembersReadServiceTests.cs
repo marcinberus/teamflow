@@ -7,13 +7,14 @@ using TeamFlow.Infrastructure.Database;
 
 namespace TeamFlow.Tests.Integration.Database.ReadServices;
 
-public sealed class ListProjectMembersReadServiceTests : IClassFixture<TeamFlowWebAppFactory>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class ListProjectMembersReadServiceTests : IntegrationTestBase
 {
     private readonly TeamFlowWebAppFactory _factory;
 
-    public ListProjectMembersReadServiceTests(TeamFlowWebAppFactory factory)
+    public ListProjectMembersReadServiceTests(IntegrationTestFixture fixture) : base(fixture)
     {
-        _factory = factory;
+        _factory = fixture.Factory;
     }
 
     [Fact]

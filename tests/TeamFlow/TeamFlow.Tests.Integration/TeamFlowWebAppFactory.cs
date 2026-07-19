@@ -7,28 +7,15 @@ using TeamFlow.Infrastructure.Database;
 
 namespace TeamFlow.Tests.Integration;
 
-public sealed class TeamFlowWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public sealed class TeamFlowWebAppFactory(DatabaseFixture database) : WebApplicationFactory<Program>
 {
-    private readonly DatabaseFixture _database = new();
-
-    public async Task InitializeAsync()
-    {
-        await _database.InitializeAsync();
-    }
-
-    public new async Task DisposeAsync()
-    {
-        await _database.DisposeAsync();
-        await base.DisposeAsync();
-    }
-
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureAppConfiguration(cfg =>
         {
             cfg.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:DefaultConnection"] = _database.ConnectionString
+                ["ConnectionStrings:DefaultConnection"] = database.ConnectionString
             });
         });
 
@@ -41,7 +28,7 @@ public sealed class TeamFlowWebAppFactory : WebApplicationFactory<Program>, IAsy
                 services.Remove(descriptor);
 
             services.AddDbContext<TeamFlowDbContext>(options =>
-                options.UseSqlServer(_database.ConnectionString));
+                options.UseSqlServer(database.ConnectionString));
         });
     }
 }

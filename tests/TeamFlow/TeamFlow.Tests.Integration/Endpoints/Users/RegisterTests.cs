@@ -5,13 +5,14 @@ using TeamFlow.Application.Users.Commands.RegisterUser;
 
 namespace TeamFlow.Tests.Integration.Endpoints.Users;
 
-public sealed class RegisterTests : IClassFixture<TeamFlowWebAppFactory>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class RegisterTests : IntegrationTestBase
 {
     private readonly HttpClient _client;
 
-    public RegisterTests(TeamFlowWebAppFactory factory)
+    public RegisterTests(IntegrationTestFixture fixture) : base(fixture)
     {
-        _client = factory.CreateClient();
+        _client = fixture.Factory.CreateClient();
     }
 
     [Fact]

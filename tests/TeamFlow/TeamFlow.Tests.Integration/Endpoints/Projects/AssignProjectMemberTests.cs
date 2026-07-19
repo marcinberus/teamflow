@@ -8,13 +8,14 @@ using TeamFlow.Application.Users.Commands.RegisterUser;
 
 namespace TeamFlow.Tests.Integration.Endpoints.Projects;
 
-public sealed class AssignProjectMemberTests : IClassFixture<TeamFlowWebAppFactory>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class AssignProjectMemberTests : IntegrationTestBase
 {
     private readonly HttpClient _client;
 
-    public AssignProjectMemberTests(TeamFlowWebAppFactory factory)
+    public AssignProjectMemberTests(IntegrationTestFixture fixture) : base(fixture)
     {
-        _client = factory.CreateClient();
+        _client = fixture.Factory.CreateClient();
     }
 
     [Fact]

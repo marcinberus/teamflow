@@ -9,13 +9,14 @@ using TeamFlow.Application.Users.DTOs;
 
 namespace TeamFlow.Tests.Integration.Endpoints.Users;
 
-public sealed class UpdateProfileTests : IClassFixture<TeamFlowWebAppFactory>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class UpdateProfileTests : IntegrationTestBase
 {
     private readonly HttpClient _client;
 
-    public UpdateProfileTests(TeamFlowWebAppFactory factory)
+    public UpdateProfileTests(IntegrationTestFixture fixture) : base(fixture)
     {
-        _client = factory.CreateClient();
+        _client = fixture.Factory.CreateClient();
     }
 
     private async Task<string> RegisterAndLoginAsync(string email, string password = "P@ssw0rd!")

@@ -104,3 +104,5 @@ dotnet test tests/TeamFlow/TeamFlow.Tests.Unit
 # Integration tests (requires Docker for Testcontainers)
 dotnet test tests/TeamFlow/TeamFlow.Tests.Integration
 ```
+
+Integration tests share one Testcontainers SQL Server instance, run sequentially, and reset database data before each test.

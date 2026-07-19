@@ -8,13 +8,14 @@ using TeamFlow.Application.Users.Commands.RegisterUser;
 
 namespace TeamFlow.Tests.Integration.Endpoints.Projects;
 
-public sealed class DeleteProjectTests : IClassFixture<TeamFlowWebAppFactory>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class DeleteProjectTests : IntegrationTestBase
 {
     private readonly HttpClient _client;
 
-    public DeleteProjectTests(TeamFlowWebAppFactory factory)
+    public DeleteProjectTests(IntegrationTestFixture fixture) : base(fixture)
     {
-        _client = factory.CreateClient();
+        _client = fixture.Factory.CreateClient();
     }
 
     [Fact]

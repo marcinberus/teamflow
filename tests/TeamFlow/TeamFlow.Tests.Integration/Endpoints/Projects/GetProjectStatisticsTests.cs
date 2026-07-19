@@ -11,13 +11,14 @@ using TeamFlow.Application.Users.Commands.RegisterUser;
 
 namespace TeamFlow.Tests.Integration.Endpoints.Projects;
 
-public sealed class GetProjectStatisticsTests : IClassFixture<TeamFlowWebAppFactory>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class GetProjectStatisticsTests : IntegrationTestBase
 {
     private readonly HttpClient _client;
 
-    public GetProjectStatisticsTests(TeamFlowWebAppFactory factory)
+    public GetProjectStatisticsTests(IntegrationTestFixture fixture) : base(fixture)
     {
-        _client = factory.CreateClient();
+        _client = fixture.Factory.CreateClient();
     }
 
     [Fact]

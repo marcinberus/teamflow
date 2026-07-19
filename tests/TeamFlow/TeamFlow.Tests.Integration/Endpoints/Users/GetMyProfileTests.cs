@@ -8,13 +8,14 @@ using TeamFlow.Application.Users.DTOs;
 
 namespace TeamFlow.Tests.Integration.Endpoints.Users;
 
-public sealed class GetMyProfileTests : IClassFixture<TeamFlowWebAppFactory>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class GetMyProfileTests : IntegrationTestBase
 {
     private readonly HttpClient _client;
 
-    public GetMyProfileTests(TeamFlowWebAppFactory factory)
+    public GetMyProfileTests(IntegrationTestFixture fixture) : base(fixture)
     {
-        _client = factory.CreateClient();
+        _client = fixture.Factory.CreateClient();
     }
 
     private async Task<string> RegisterAndLoginAsync(string email, string password = "P@ssw0rd!")

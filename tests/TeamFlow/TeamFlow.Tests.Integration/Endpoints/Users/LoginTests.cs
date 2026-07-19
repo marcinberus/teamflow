@@ -6,13 +6,14 @@ using TeamFlow.Application.Users.Commands.RegisterUser;
 
 namespace TeamFlow.Tests.Integration.Endpoints.Users;
 
-public sealed class LoginTests : IClassFixture<TeamFlowWebAppFactory>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class LoginTests : IntegrationTestBase
 {
     private readonly HttpClient _client;
 
-    public LoginTests(TeamFlowWebAppFactory factory)
+    public LoginTests(IntegrationTestFixture fixture) : base(fixture)
     {
-        _client = factory.CreateClient();
+        _client = fixture.Factory.CreateClient();
     }
 
     private async Task RegisterUserAsync(string email, string password = "P@ssw0rd!")

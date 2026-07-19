@@ -8,7 +8,8 @@ using TeamFlow.Infrastructure.Database.Repositories;
 
 namespace TeamFlow.Tests.Integration.Database.Repositories;
 
-public sealed class ProjectRepositoryTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
+[Collection(IntegrationTestCollection.Name)]
+public sealed class ProjectRepositoryTests : IntegrationTestBase
 {
     private readonly DatabaseFixture _fixture;
 
@@ -17,13 +18,14 @@ public sealed class ProjectRepositoryTests : IClassFixture<DatabaseFixture>, IAs
     private ProjectRepository _repository = null!;
     private UnitOfWork _unitOfWork = null!;
 
-    public ProjectRepositoryTests(DatabaseFixture fixture)
+    public ProjectRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
     {
-        _fixture = fixture;
+        _fixture = fixture.Database;
     }
 
-    public async Task InitializeAsync()
+    public override async Task InitializeAsync()
     {
+        await base.InitializeAsync();
         var options = new DbContextOptionsBuilder<TeamFlowDbContext>()
             .UseSqlServer(_fixture.ConnectionString)
             .Options;
@@ -34,7 +36,7 @@ public sealed class ProjectRepositoryTests : IClassFixture<DatabaseFixture>, IAs
         _unitOfWork = new UnitOfWork(_db);
     }
 
-    public async Task DisposeAsync()
+    public override async Task DisposeAsync()
     {
         await _transaction.RollbackAsync();
         await _db.DisposeAsync();
