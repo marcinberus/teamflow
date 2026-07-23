@@ -8,4 +8,5 @@ public static class ErrorMessages
     public const string EmailAlreadyExists = "A user with this email address already exists.";
     public const string InvalidRole = "The specified role is invalid.";
     public const string AssignedUserNotProjectMember = "The assigned user is not a project member.";
+    public const string InvalidExtension = "Extension not allowed.";
 }

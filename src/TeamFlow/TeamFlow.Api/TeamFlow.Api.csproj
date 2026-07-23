@@ -3,7 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="..\TeamFlow.Application\TeamFlow.Application.csproj" />
     <ProjectReference Include="..\TeamFlow.Infrastructure\TeamFlow.Infrastructure.csproj" />
-    <ProjectReference Include="..\TeamFlow.Importing\TeamFlow.Importing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

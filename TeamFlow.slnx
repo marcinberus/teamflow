@@ -19,4 +19,7 @@
   <Folder Name="/benchmarks/">
     <Project Path="src/TeamFlow/TeamFlow.Benchmarks/TeamFlow.Benchmarks.csproj" />
   </Folder>
+  <Folder Name="/tests/TeamFlow/TestData/">
+    <File Path="tests/TeamFlow/TestData/projects.csv" />
+  </Folder>
 </Solution>

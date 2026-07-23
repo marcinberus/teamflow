@@ -1,7 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using TeamFlow.Application.Users.Commands.RegisterUser;
+using TeamFlow.Importing;
 
 namespace TeamFlow.Application;
 
@@ -9,6 +9,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddImportingModule();
+
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
 

@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TeamFlow.Domain\TeamFlow.Domain.csproj" />
+    <ProjectReference Include="..\TeamFlow.Importing\TeamFlow.Importing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

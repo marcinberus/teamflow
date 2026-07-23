@@ -6,6 +6,7 @@ using TeamFlow.Api.Middleware;
 using TeamFlow.Application.Projects.Commands.ChangeProjectStatus;
 using TeamFlow.Application.Projects.Commands.CreateProject;
 using TeamFlow.Application.Projects.Commands.DeleteProject;
+using TeamFlow.Application.Projects.Commands.ImportProject;
 using TeamFlow.Application.Projects.Commands.UpdateProject;
 using TeamFlow.Application.Projects.DTOs;
 using TeamFlow.Application.Projects.Queries.GetProject;
@@ -140,6 +141,25 @@ public sealed class ProjectsController(IMediator mediator) : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpPost("import")]
+    [ProducesResponseType(typeof(ImportProjectResult), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> Import(
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        await using var stream = file.OpenReadStream();
+        var command = new ImportProjectCommand(stream, extension);
+
+        var result = await mediator.Send(command, cancellationToken);
+
+        return CreatedAtAction(nameof(List),
+            new { },
+            null);
     }
 
     [HttpDelete("{projectId:guid}")]
