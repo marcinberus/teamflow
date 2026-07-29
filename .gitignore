@@ -59,4 +59,5 @@ nunit-*.xml
 # VS
 .vs
 
+BenchmarkDotNet.Artifacts/*
 src/TeamFlow/TeamFlow.Benchmarks/BenchmarkDotNet.Artifacts/*
