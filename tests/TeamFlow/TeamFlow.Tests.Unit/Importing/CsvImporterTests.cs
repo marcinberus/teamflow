@@ -68,6 +68,7 @@ public class CsvImporterTests
             .ThrowAsync<FormatException>()
             .WithMessage("*line 1*");
     }
+    
     [Fact]
     public async Task Import_ShouldIgnoreBlankLines_AndReportTheOriginalLineNumber()
     {

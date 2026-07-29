@@ -159,7 +159,7 @@ public sealed class ProjectsController(IMediator mediator) : ControllerBase
 
         return CreatedAtAction(nameof(List),
             new { },
-            null);
+            result.Value);
     }
 
     [HttpDelete("{projectId:guid}")]

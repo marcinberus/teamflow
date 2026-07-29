@@ -81,6 +81,7 @@ All routes are versioned under `/api/v1/`.
 | `GET` | `/api/v1/users/me` | ✓ | Get current user profile |
 | `PUT` | `/api/v1/users/me` | ✓ | Update current user's first and last name |
 | `POST` | `/api/v1/projects` | ✓ | Create a project; caller becomes its owner |
+| `POST` | `/api/v1/projects/import` | ✓ | Import projects from a CSV file sent as `multipart/form-data` |
 | `GET` | `/api/v1/projects?page=1&pageSize=20&status=Active` | ✓ | List projects with pagination and an optional status filter |
 | `GET` | `/api/v1/projects/{projectId}` | ✓ | Get full project details |
 | `PUT` | `/api/v1/projects/{projectId}` | ✓ | Update a project's name and description (owner or admin) |
@@ -106,3 +107,13 @@ dotnet test tests/TeamFlow/TeamFlow.Tests.Integration
 ```
 
 Integration tests share one Testcontainers SQL Server instance, run sequentially, and reset database data before each test.
+
+## Running benchmarks
+
+Run the CSV importer benchmark in Release mode:
+
+```bash
+dotnet run -c Release --project src/TeamFlow/TeamFlow.Benchmarks
+```
+
+The benchmark compares the `string.Split()` importer with the `ReadOnlySpan<char>` importer, including execution time and memory allocations.
