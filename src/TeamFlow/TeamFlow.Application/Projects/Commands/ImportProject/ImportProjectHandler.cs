@@ -4,13 +4,14 @@ using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Common.Models;
 using TeamFlow.Application.Projects.Interfaces;
 using TeamFlow.Domain.Entities;
+using TeamFlow.Importing;
 using TeamFlow.Importing.FileExtensions;
-using TeamFlow.Importing.Projects;
+using TeamFlow.Importing.Projects.Models;
 
 namespace TeamFlow.Application.Projects.Commands.ImportProject;
 
 public sealed class ImportProjectHandler(
-    IProjectImportManager projectImportManager,
+    IImportManager<ProjectLine> importManager,
     ICurrentUserService currentUserService,
     IProjectRepository projectRepository,
     IUnitOfWork unitOfWork,
@@ -27,7 +28,7 @@ public sealed class ImportProjectHandler(
 
         var projectsIds = new List<Guid>();
 
-        await foreach (var projectLine in projectImportManager.Import(
+        await foreach (var projectLine in importManager.Import(
             extension,
             request.Stream,
             cancellationToken))

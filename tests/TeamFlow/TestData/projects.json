@@ -1,0 +1,24 @@
+{
+    "projects": [
+        {
+            "name": "Website Redesign",
+            "description": "Modernize the company website with a clearer design and improved accessibility."
+        },
+        {
+            "name": "Mobile App Launch",
+            "description": "Build and release a mobile application for customers on iOS and Android."
+        },
+        {
+            "name": "Customer Portal",
+            "description": "Create a secure self-service portal for customer accounts and support requests."
+        },
+        {
+            "name": "Data Analytics Platform",
+            "description": "Develop a platform for reporting, dashboards, and business insights."
+        },
+        {
+            "name": "Infrastructure Upgrade",
+            "description": "Upgrade core infrastructure to improve reliability, performance, and security."
+        }
+    ]
+}

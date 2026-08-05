@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using TeamFlow.Api.Middleware;
 using TeamFlow.Application.Tasks.Commands.ChangeTaskStatus;
 using TeamFlow.Application.Tasks.Commands.CreateTask;
+using TeamFlow.Application.Tasks.Commands.ImportTask;
 using TeamFlow.Application.Tasks.Commands.UpdateTask;
 using TeamFlow.Application.Tasks.Queries.ListTasks;
 
@@ -128,5 +129,25 @@ public sealed class TasksController(IMediator mediator) : ControllerBase
         }
 
         return NoContent();
+    }
+
+    [HttpPost("import")]
+    [ProducesResponseType(typeof(ImportTaskItemResult), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> Import(
+        Guid projectId,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        await using var stream = file.OpenReadStream();
+        var command = new ImportTaskItemCommand(projectId, stream, extension);
+
+        var result = await mediator.Send(command, cancellationToken);
+
+        return CreatedAtAction(nameof(List),
+            new { },
+            result.Value);
     }
 }

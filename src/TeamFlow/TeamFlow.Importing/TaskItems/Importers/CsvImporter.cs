@@ -1,23 +1,21 @@
 ﻿using System.Runtime.CompilerServices;
 using TeamFlow.Importing.Common;
 using TeamFlow.Importing.FileExtensions;
-using TeamFlow.Importing.Projects.Models;
+using TeamFlow.Importing.TaskItems.Models;
 
-namespace TeamFlow.Importing.Projects.Importerts;
+namespace TeamFlow.Importing.TaskItems.Importers;
 
-public class CsvImporter : IProjectImporter
+public class CsvImporter : ITaskItemImporter
 {
     private const string Separator = "\",\"";
     private const char Quote = '"';
 
     public bool CanImport(FileExtension fileExtension) => fileExtension == FileExtension.Csv;
 
-    public async IAsyncEnumerable<ProjectLine> Import(
-        Stream stream,
+    public async IAsyncEnumerable<TaskItemLine> Import(
+        Stream stream, 
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(stream);
-
         if (!stream.CanRead)
         {
             throw new ArgumentException(ErrorMessages.StreamUnreadable);
@@ -35,34 +33,35 @@ public class CsvImporter : IProjectImporter
                 continue;
             }
 
-            yield return ParseLine(line.AsSpan(), lineNumber);
+            yield return ParseLine(line.AsMemory(), lineNumber);
         }
     }
 
-    private static ProjectLine ParseLine(ReadOnlySpan<char> line, int lineNumber)
+    private static TaskItemLine ParseLine(ReadOnlyMemory<char> line, int lineNumber)
     {
-        var separatorIndex = line.IndexOf(Separator.AsSpan());
+        var lineValue = line.Span;
+        var separatorIndex = lineValue.IndexOf(Separator.AsSpan());
 
-        if (line.Length < 5
-            || line[0] != Quote
-            || line[^1] != Quote
+        if (lineValue.Length < 5
+            || lineValue[0] != Quote
+            || lineValue[^1] != Quote
             || separatorIndex < 1
-            || separatorIndex + Separator.Length > line.Length - 1)
+            || separatorIndex + Separator.Length > lineValue.Length - 1)
         {
             throw CreateInvalidRowException(lineNumber);
         }
 
-        var name = line[1..separatorIndex];
+        var title = line[1..separatorIndex];
         var description = line[(separatorIndex + Separator.Length)..^1];
 
-        if (name.IndexOf(Quote) >= 0 || description.IndexOf(Quote) >= 0)
+        if (title.Span.IndexOf(Quote) >= 0 || description.Span.IndexOf(Quote) >= 0)
         {
             throw CreateInvalidRowException(lineNumber);
         }
 
-        return new ProjectLine(
-            name.ToString(),
-            description.ToString());
+        return new TaskItemLine(
+            title,
+            description);
     }
 
     private static FormatException CreateInvalidRowException(int lineNumber)

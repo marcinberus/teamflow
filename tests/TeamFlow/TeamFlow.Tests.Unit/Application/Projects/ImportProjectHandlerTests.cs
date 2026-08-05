@@ -5,15 +5,15 @@ using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Projects.Commands.ImportProject;
 using TeamFlow.Application.Projects.Interfaces;
 using TeamFlow.Domain.Entities;
+using TeamFlow.Importing;
 using TeamFlow.Importing.FileExtensions;
-using TeamFlow.Importing.Projects;
 using TeamFlow.Importing.Projects.Models;
 
 namespace TeamFlow.Tests.Unit.Application.Projects;
 
 public sealed class ImportProjectHandlerTests
 {
-    private readonly IProjectImportManager _projectImportManager = Substitute.For<IProjectImportManager>();
+    private readonly IImportManager<ProjectLine> _projectImportManager = Substitute.For<IImportManager<ProjectLine>>();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly IProjectRepository _projectRepository = Substitute.For<IProjectRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();

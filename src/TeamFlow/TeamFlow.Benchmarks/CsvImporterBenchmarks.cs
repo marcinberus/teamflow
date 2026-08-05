@@ -1,7 +1,9 @@
-using System.Text;
 using BenchmarkDotNet.Attributes;
-using TeamFlow.Importing.Projects;
+using System.Text;
+using TeamFlow.Importing;
 using TeamFlow.Importing.Projects.Importerts;
+using MemoryCsvImporter = TeamFlow.Importing.TaskItems.Importers.CsvImporter;
+using SpanCsvImporter = TeamFlow.Importing.Projects.Importerts.CsvImporter;
 
 namespace TeamFlow.Benchmarks;
 
@@ -10,8 +12,9 @@ public class CsvImporterBenchmarks
 {
     private static readonly byte[] CsvContent = Encoding.UTF8.GetBytes(CreateCsvContent());
 
-    private readonly CsvImporter _spanImporter = new();
     private readonly CsvSplitImporter _splitImporter = new();
+    private readonly SpanCsvImporter _spanImporter = new();
+    private readonly MemoryCsvImporter _memoryImporter = new();
 
     [Benchmark(Baseline = true, Description = "string.Split")]
     public Task<int> ImportWithSplitAsync() => ImportAllAsync(_splitImporter);
@@ -19,7 +22,10 @@ public class CsvImporterBenchmarks
     [Benchmark(Description = "ReadOnlySpan<char>")]
     public Task<int> ImportWithSpanAsync() => ImportAllAsync(_spanImporter);
 
-    private static async Task<int> ImportAllAsync(IProjectImporter importer)
+    [Benchmark(Description = "ReadOnlyMemory<char>")]
+    public Task<int> ImportWithMemoryAsync() => ImportAllAsync(_memoryImporter);
+
+    private static async Task<int> ImportAllAsync<T>(IImporter<T> importer) where T : IImportLine
     {
         using var stream = new MemoryStream(CsvContent, writable: false);
         var importedCount = 0;

@@ -3,9 +3,9 @@ using FluentAssertions;
 using TeamFlow.Importing.Projects.Importerts;
 using TeamFlow.Importing.Projects.Models;
 
-namespace TeamFlow.Tests.Unit.Importing;
+namespace TeamFlow.Tests.Unit.Importing.Projects;
 
-public class CsvImporterTests
+public class CsvSplitImporterTests
 {
     [Fact]
     public async Task Import_ShouldParseRows_WhenFieldsAreSurroundedByQuotes()
@@ -14,7 +14,7 @@ public class CsvImporterTests
             + "\"Plain name\",\"Plain description\"";
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
-        var importer = new CsvImporter();
+        var importer = new CsvSplitImporter();
         var rows = new List<ProjectLine>();
 
         await foreach (var row in importer.Import(stream, CancellationToken.None))
@@ -32,10 +32,10 @@ public class CsvImporterTests
     [InlineData("\"Website\",Description")]
     [InlineData("Website,\"Description\"")]
     [InlineData("\"Website\",\"Description\",\"Extra\"")]
-    public async Task Import_ShouldFail_WhenFieldsAreNotSurroundedByQuotes(string csv)
+    public async Task Import_ShouldFail_WhenCsvRowIsInvalid(string csv)
     {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
-        var importer = new CsvImporter();
+        var importer = new CsvSplitImporter();
 
         var action = async () =>
         {
@@ -55,7 +55,7 @@ public class CsvImporterTests
     public async Task Import_ShouldFail_WhenFieldContainsAdditionalQuote(string csv)
     {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
-        var importer = new CsvImporter();
+        var importer = new CsvSplitImporter();
 
         var action = async () =>
         {
@@ -68,14 +68,14 @@ public class CsvImporterTests
             .ThrowAsync<FormatException>()
             .WithMessage("*line 1*");
     }
-    
+
     [Fact]
     public async Task Import_ShouldIgnoreBlankLines_AndReportTheOriginalLineNumber()
     {
         const string csv = "\r\n\"Valid\",\"Row\"\r\n\r\nInvalid";
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
-        var importer = new CsvImporter();
+        var importer = new CsvSplitImporter();
         var rows = new List<ProjectLine>();
 
         var action = async () =>
