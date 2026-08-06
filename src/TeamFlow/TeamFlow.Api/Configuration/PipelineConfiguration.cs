@@ -7,6 +7,8 @@ public static class PipelineConfiguration
 {
     public static WebApplication UsePipelineConfiguration(this WebApplication app)
     {
+        app.UseSerilogRequestLogging();
+
         app.UseExceptionHandling();
 
         app.UseSwaggerConfiguration(app.Environment);

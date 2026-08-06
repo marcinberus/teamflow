@@ -1,14 +1,30 @@
+using Serilog;
 using TeamFlow.Api.Configuration;
 
-var builder = WebApplication.CreateBuilder(args);
+TeamFlow.Api.Configuration.LoggerConfiguration.InitLogger();
 
-builder.Services.AddServiceConfiguration(builder.Configuration);
+try
+{
+    Log.Information("Starting application");
 
-var app = builder.Build();
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Services.AddServiceConfiguration(builder.Configuration);
 
-app.UsePipelineConfiguration();
+    var app = builder.Build();
 
-app.Run();
+    app.UsePipelineConfiguration();
+
+    await app.RunAsync();
+}
+catch (Exception exception)
+{
+    Log.Fatal(exception, "Application terminated unexpectedly");
+}
+finally
+{
+    await Log.CloseAndFlushAsync();
+}
+
 
 public partial class Program { }
 

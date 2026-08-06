@@ -12,6 +12,8 @@ public static class ServiceConfiguration
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddSerilog(configuration);
+
         services.AddApplication();
         services.AddInfrastructure(configuration);
 
