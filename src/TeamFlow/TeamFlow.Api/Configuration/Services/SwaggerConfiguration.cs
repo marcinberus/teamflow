@@ -39,7 +39,7 @@ public static class SwaggerConfiguration
 
     public static IApplicationBuilder UseSwaggerConfiguration(this IApplicationBuilder app, IWebHostEnvironment env)
     {
-        if (env.IsDevelopment())
+        if (env.IsDevelopment() || env.IsEnvironment("Docker"))
         {
             app.UseSwagger();
             app.UseSwaggerUI();

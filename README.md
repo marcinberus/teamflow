@@ -26,14 +26,15 @@ TeamFlow.Infrastructure  ← EF Core, JWT, BCrypt, repositories
 TeamFlow.Api             ← controllers, middleware, DI composition root
 ```
 
-## Prerequisites
+## Local development
+### Prerequisites
 
 - [.NET 9 SDK](https://dotnet.microsoft.com/download)
 - SQL Server
 
-## Getting started
+### Getting started
 
-```bash
+```ps1
 # Restore dependencies
 dotnet restore
 
@@ -41,7 +42,32 @@ dotnet restore
 dotnet ef database update -p src/TeamFlow/TeamFlow.Infrastructure -s src/TeamFlow/TeamFlow.Api
 
 # Run the API
-dotnet run --project src/TeamFlow/TeamFlow.Api
+dotnet watch --project src/TeamFlow/TeamFlow.Api --launch-profile Development
+```
+
+## Local development with Docker
+### Prerequisites
+
+- [.NET 9 SDK](https://dotnet.microsoft.com/download)
+- Docker
+
+### Getting started
+
+```ps1
+# Start infrastructure
+docker compose up -d --wait
+
+# Select the environment to pick up connection string for the containerized database
+$env:ASPNETCORE_ENVIRONMENT = "Docker"
+
+# Restore dependencies
+dotnet restore
+
+# Apply database migrations
+dotnet ef database update -p src/TeamFlow/TeamFlow.Infrastructure -s src/TeamFlow/TeamFlow.Api
+
+# Run the API
+dotnet watch --project src/TeamFlow/TeamFlow.Api --launch-profile Docker
 ```
 
 The API will be available at:
