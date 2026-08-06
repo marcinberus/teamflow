@@ -49,8 +49,7 @@ public sealed class AssignMemberCommandHandler(
         }
 
         var role = Enum.Parse<Role>(request.ProjectRole);
-        project.AssignMember(user.Id, role, dateTimeProvider.UtcNow);
-        var member = project.Members.Single(item => item.UserId == user.Id);
+        var member = project.AssignMember(user.Id, role, dateTimeProvider.UtcNow);
 
         await projectRepository.AddMemberAsync(member, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);

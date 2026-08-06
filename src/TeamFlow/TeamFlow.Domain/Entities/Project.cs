@@ -33,14 +33,17 @@ public sealed class Project : Entity
         };
     }
 
-    public void AssignMember(Guid userId, Role role, DateTimeOffset now)
+    public ProjectMember AssignMember(Guid userId, Role role, DateTimeOffset now)
     {
         if (_members.Any(m => m.UserId == userId))
         {
             throw new ConflictException($"User {userId} is already a member of this project.");
         }
 
-        _members.Add(ProjectMember.Create(Id, userId, role, now));
+        var member = ProjectMember.Create(Id, userId, role, now);
+        _members.Add(member);
+
+        return member;
     }
 
     public bool CanAssignMembers(Guid userId, Role? userRole)

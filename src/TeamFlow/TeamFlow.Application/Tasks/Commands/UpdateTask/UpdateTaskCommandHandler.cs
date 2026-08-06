@@ -19,7 +19,7 @@ public sealed class UpdateTaskCommandHandler(
         UpdateTaskCommand request,
         CancellationToken cancellationToken)
     {
-        var project = await projectRepository.GetByIdWithMembersAsync(
+        var project = await projectRepository.GetByIdAsync(
             request.ProjectId,
             cancellationToken);
 
@@ -28,7 +28,12 @@ public sealed class UpdateTaskCommandHandler(
             return Result<UpdateTaskResult>.Failure(ErrorMessages.NotFound);
         }
 
-        if (!project.HasMember(currentUserService.UserId))
+        var currentUserId = currentUserService.UserId;
+
+        if (!await projectRepository.HasMemberAsync(
+                project.Id,
+                currentUserId,
+                cancellationToken))
         {
             return Result<UpdateTaskResult>.Failure(ErrorMessages.Forbidden);
         }
@@ -40,8 +45,12 @@ public sealed class UpdateTaskCommandHandler(
             return Result<UpdateTaskResult>.Failure(ErrorMessages.NotFound);
         }
 
-        //if (request.AssignedUserId.HasValue            && !project.HasMember(request.AssignedUserId.Value))
-        if (request.AssignedUserId is { } assignedUserId && !project.HasMember(assignedUserId))
+        if (request.AssignedUserId is { } assignedUserId
+            && assignedUserId != currentUserId
+            && !await projectRepository.HasMemberAsync(
+                project.Id,
+                assignedUserId,
+                cancellationToken))
         {
             return Result<UpdateTaskResult>.Failure(ErrorMessages.AssignedUserNotProjectMember);
         }

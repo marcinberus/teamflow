@@ -84,6 +84,43 @@ public sealed class ProjectRepositoryTests : IntegrationTestBase
         persistedProject.UpdatedAt.Should().Be(updatedAt);
     }
 
+    [Fact]
+    public async Task HasMemberAsync_ShouldRecognizeOwnerAndAssignedMember()
+    {
+        var project = await SeedProjectAsync("project-repository-membership@example.com");
+        var now = DateTimeOffset.UtcNow;
+        var member = User.Create(
+            "project-repository-member@example.com",
+            "hash",
+            "Test",
+            "Member",
+            Role.Developer,
+            now);
+        _db.Users.Add(member);
+        var loadedProject = await _repository.GetByIdAsync(project.Id, CancellationToken.None);
+        var projectMember = loadedProject!.AssignMember(member.Id, Role.Developer, now);
+        await _repository.AddMemberAsync(projectMember, CancellationToken.None);
+        await _unitOfWork.SaveChangesAsync(CancellationToken.None);
+        _db.ChangeTracker.Clear();
+
+        var ownerResult = await _repository.HasMemberAsync(
+            project.Id,
+            project.OwnerId,
+            CancellationToken.None);
+        var memberResult = await _repository.HasMemberAsync(
+            project.Id,
+            member.Id,
+            CancellationToken.None);
+        var outsiderResult = await _repository.HasMemberAsync(
+            project.Id,
+            Guid.NewGuid(),
+            CancellationToken.None);
+
+        ownerResult.Should().BeTrue();
+        memberResult.Should().BeTrue();
+        outsiderResult.Should().BeFalse();
+    }
+
     private async Task<Project> SeedProjectAsync(string ownerEmail)
     {
         var now = DateTimeOffset.UtcNow;

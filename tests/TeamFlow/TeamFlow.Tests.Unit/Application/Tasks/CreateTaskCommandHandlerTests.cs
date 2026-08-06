@@ -45,8 +45,10 @@ public sealed class CreateTaskCommandHandlerTests
             now.AddDays(1));
 
         _currentUserService.UserId.Returns(ownerId);
-        _projectRepository.GetByIdWithMembersAsync(project.Id, Arg.Any<CancellationToken>())
+        _projectRepository.GetByIdAsync(project.Id, Arg.Any<CancellationToken>())
             .Returns(project);
+        _projectRepository.HasMemberAsync(project.Id, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(true);
         _dateTimeProvider.UtcNow.Returns(now);
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -74,8 +76,10 @@ public sealed class CreateTaskCommandHandlerTests
         project.AssignMember(memberId, Role.Developer, now);
 
         _currentUserService.UserId.Returns(memberId);
-        _projectRepository.GetByIdWithMembersAsync(project.Id, Arg.Any<CancellationToken>())
+        _projectRepository.GetByIdAsync(project.Id, Arg.Any<CancellationToken>())
             .Returns(project);
+        _projectRepository.HasMemberAsync(project.Id, memberId, Arg.Any<CancellationToken>())
+            .Returns(true);
         _dateTimeProvider.UtcNow.Returns(now);
 
         var result = await _handler.Handle(
@@ -94,7 +98,7 @@ public sealed class CreateTaskCommandHandlerTests
     public async Task Handle_ShouldReturnNotFound_WhenProjectDoesNotExist()
     {
         var projectId = Guid.NewGuid();
-        _projectRepository.GetByIdWithMembersAsync(projectId, Arg.Any<CancellationToken>())
+        _projectRepository.GetByIdAsync(projectId, Arg.Any<CancellationToken>())
             .Returns((Project?)null);
 
         var result = await _handler.Handle(
@@ -115,7 +119,7 @@ public sealed class CreateTaskCommandHandlerTests
             Guid.NewGuid(),
             DateTimeOffset.UtcNow);
         _currentUserService.UserId.Returns(Guid.NewGuid());
-        _projectRepository.GetByIdWithMembersAsync(project.Id, Arg.Any<CancellationToken>())
+        _projectRepository.GetByIdAsync(project.Id, Arg.Any<CancellationToken>())
             .Returns(project);
 
         var result = await _handler.Handle(
@@ -138,8 +142,10 @@ public sealed class CreateTaskCommandHandlerTests
             ownerId,
             DateTimeOffset.UtcNow);
         _currentUserService.UserId.Returns(ownerId);
-        _projectRepository.GetByIdWithMembersAsync(project.Id, Arg.Any<CancellationToken>())
+        _projectRepository.GetByIdAsync(project.Id, Arg.Any<CancellationToken>())
             .Returns(project);
+        _projectRepository.HasMemberAsync(project.Id, ownerId, Arg.Any<CancellationToken>())
+            .Returns(true);
 
         var result = await _handler.Handle(
             new CreateTaskCommand(project.Id, "Design API", string.Empty, Guid.NewGuid(), null),

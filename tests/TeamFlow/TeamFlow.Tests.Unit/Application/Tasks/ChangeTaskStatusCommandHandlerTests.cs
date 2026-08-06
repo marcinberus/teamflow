@@ -41,8 +41,10 @@ public sealed class ChangeTaskStatusCommandHandlerTests
         var task = TaskItem.Create(project.Id, "Design API", string.Empty, memberId, null, now);
 
         _currentUserService.UserId.Returns(memberId);
-        _projectRepository.GetByIdWithMembersAsync(project.Id, Arg.Any<CancellationToken>())
+        _projectRepository.GetByIdAsync(project.Id, Arg.Any<CancellationToken>())
             .Returns(project);
+        _projectRepository.HasMemberAsync(project.Id, memberId, Arg.Any<CancellationToken>())
+            .Returns(true);
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>())
             .Returns(task);
         _dateTimeProvider.UtcNow.Returns(updatedAt);
@@ -61,7 +63,7 @@ public sealed class ChangeTaskStatusCommandHandlerTests
     public async Task Handle_ShouldReturnNotFound_WhenProjectDoesNotExist()
     {
         var command = ValidCommand();
-        _projectRepository.GetByIdWithMembersAsync(command.ProjectId, Arg.Any<CancellationToken>())
+        _projectRepository.GetByIdAsync(command.ProjectId, Arg.Any<CancellationToken>())
             .Returns((Project?)null);
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -79,7 +81,7 @@ public sealed class ChangeTaskStatusCommandHandlerTests
         var project = Project.Create("Apollo", "Landing mission", Guid.NewGuid(), DateTimeOffset.UtcNow);
         var command = ValidCommand(project.Id);
         _currentUserService.UserId.Returns(Guid.NewGuid());
-        _projectRepository.GetByIdWithMembersAsync(project.Id, Arg.Any<CancellationToken>())
+        _projectRepository.GetByIdAsync(project.Id, Arg.Any<CancellationToken>())
             .Returns(project);
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -98,8 +100,10 @@ public sealed class ChangeTaskStatusCommandHandlerTests
         var project = Project.Create("Apollo", "Landing mission", ownerId, DateTimeOffset.UtcNow);
         var command = ValidCommand(project.Id);
         _currentUserService.UserId.Returns(ownerId);
-        _projectRepository.GetByIdWithMembersAsync(project.Id, Arg.Any<CancellationToken>())
+        _projectRepository.GetByIdAsync(project.Id, Arg.Any<CancellationToken>())
             .Returns(project);
+        _projectRepository.HasMemberAsync(project.Id, ownerId, Arg.Any<CancellationToken>())
+            .Returns(true);
         _taskItemRepository.GetByIdAsync(command.TaskId, Arg.Any<CancellationToken>())
             .Returns((TaskItem?)null);
 
@@ -119,8 +123,10 @@ public sealed class ChangeTaskStatusCommandHandlerTests
         var task = TaskItem.Create(Guid.NewGuid(), "Other task", string.Empty, null, null, now);
         var command = ValidCommand(project.Id, task.Id);
         _currentUserService.UserId.Returns(ownerId);
-        _projectRepository.GetByIdWithMembersAsync(project.Id, Arg.Any<CancellationToken>())
+        _projectRepository.GetByIdAsync(project.Id, Arg.Any<CancellationToken>())
             .Returns(project);
+        _projectRepository.HasMemberAsync(project.Id, ownerId, Arg.Any<CancellationToken>())
+            .Returns(true);
         _taskItemRepository.GetByIdAsync(task.Id, Arg.Any<CancellationToken>())
             .Returns(task);
 

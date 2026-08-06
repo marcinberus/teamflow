@@ -20,7 +20,7 @@ public sealed class ChangeTaskStatusCommandHandler(
         ChangeTaskStatusCommand request,
         CancellationToken cancellationToken)
     {
-        var project = await projectRepository.GetByIdWithMembersAsync(
+        var project = await projectRepository.GetByIdAsync(
             request.ProjectId,
             cancellationToken);
 
@@ -29,7 +29,10 @@ public sealed class ChangeTaskStatusCommandHandler(
             return Result<ChangeTaskStatusResult>.Failure(ErrorMessages.NotFound);
         }
 
-        if (!project.HasMember(currentUserService.UserId))
+        if (!await projectRepository.HasMemberAsync(
+                project.Id,
+                currentUserService.UserId,
+                cancellationToken))
         {
             return Result<ChangeTaskStatusResult>.Failure(ErrorMessages.Forbidden);
         }

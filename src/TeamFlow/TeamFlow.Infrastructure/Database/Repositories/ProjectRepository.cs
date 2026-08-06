@@ -24,6 +24,16 @@ public sealed class ProjectRepository(TeamFlowDbContext context) : IProjectRepos
             .Include(project => project.Members)
             .FirstOrDefaultAsync(project => project.Id == id, cancellationToken);
 
+    public Task<bool> HasMemberAsync(
+        Guid projectId,
+        Guid userId,
+        CancellationToken cancellationToken) =>
+        context.Projects.AnyAsync(
+            project => project.Id == projectId
+                && (project.OwnerId == userId
+                    || project.Members.Any(member => member.UserId == userId)),
+            cancellationToken);
+
     public Task DeleteAsync(Project project, CancellationToken cancellationToken)
     {
         context.Projects.Remove(project);

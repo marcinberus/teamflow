@@ -19,7 +19,7 @@ public sealed class CreateTaskCommandHandler(
         CreateTaskCommand request,
         CancellationToken cancellationToken)
     {
-        var project = await projectRepository.GetByIdWithMembersAsync(
+        var project = await projectRepository.GetByIdAsync(
             request.ProjectId,
             cancellationToken);
 
@@ -30,14 +30,21 @@ public sealed class CreateTaskCommandHandler(
 
         var currentUserId = currentUserService.UserId;
 
-        if (!project.HasMember(currentUserId))
+        if (!await projectRepository.HasMemberAsync(
+                project.Id,
+                currentUserId,
+                cancellationToken))
         {
             return Result<CreateTaskResult>.Failure(ErrorMessages.Forbidden);
         }
 
         var assignedUserId = request.AssignedUserId ?? currentUserId;
 
-        if (!project.HasMember(assignedUserId))
+        if (assignedUserId != currentUserId
+            && !await projectRepository.HasMemberAsync(
+                project.Id,
+                assignedUserId,
+                cancellationToken))
         {
             return Result<CreateTaskResult>.Failure(ErrorMessages.AssignedUserNotProjectMember);
         }
