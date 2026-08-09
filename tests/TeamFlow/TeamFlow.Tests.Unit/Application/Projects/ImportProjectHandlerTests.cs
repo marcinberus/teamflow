@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Projects.Commands.ImportProject;
@@ -133,6 +134,7 @@ public sealed class ImportProjectHandlerTests
             _currentUserService,
             _projectRepository,
             _unitOfWork,
-            _dateTimeProvider);
+            _dateTimeProvider,
+            Substitute.For<ILogger<ImportProjectHandler>>());
     }
 }

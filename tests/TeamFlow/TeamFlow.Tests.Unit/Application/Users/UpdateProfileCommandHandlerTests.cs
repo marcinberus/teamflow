@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Users.Commands.UpdateProfile;
@@ -24,7 +25,8 @@ public class UpdateProfileCommandHandlerTests
             _currentUserService,
             _userRepository,
             _unitOfWork,
-            _dateTimeProvider);
+            _dateTimeProvider,
+            Substitute.For<ILogger<UpdateProfileCommandHandler>>());
     }
 
     [Fact]

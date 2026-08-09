@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Projects.Commands.CreateProject;
 using TeamFlow.Application.Projects.Interfaces;
@@ -55,6 +56,7 @@ public sealed class CreateProjectCommandHandlerTests
             _currentUserService,
             _projectRepository,
             _unitOfWork,
-            _dateTimeProvider);
+            _dateTimeProvider,
+            Substitute.For<ILogger<CreateProjectCommandHandler>>());
     }
 }

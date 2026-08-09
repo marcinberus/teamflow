@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Common.Models;
@@ -9,7 +10,8 @@ namespace TeamFlow.Application.Users.Queries.GetMyProfile;
 
 public sealed class GetMyProfileQueryHandler(
     ICurrentUserService currentUserService,
-    IUserReadService userReadService) : IRequestHandler<GetMyProfileQuery, Result<UserProfileDto>>
+    IUserReadService userReadService,
+    ILogger<GetMyProfileQueryHandler> logger) : IRequestHandler<GetMyProfileQuery, Result<UserProfileDto>>
 {
     public async Task<Result<UserProfileDto>> Handle(GetMyProfileQuery request, CancellationToken cancellationToken)
     {
@@ -17,8 +19,13 @@ public sealed class GetMyProfileQueryHandler(
 
         var profile = await userReadService.GetProfileAsync(userId, cancellationToken);
 
-        return profile is null
-            ? Result<UserProfileDto>.Failure(ErrorMessages.NotFound)
-            : Result<UserProfileDto>.Success(profile);
+        if (profile is null)
+        {
+            logger.LogInformation("Profile for user {UserId} was not found.", userId);
+            return Result<UserProfileDto>.Failure(ErrorMessages.NotFound);
+        }
+
+        logger.LogInformation("Profile for user {UserId} was retrieved.", userId);
+        return Result<UserProfileDto>.Success(profile);
     }
 }

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Tasks.Commands.ImportTask;
@@ -137,6 +138,7 @@ public sealed class ImportTaskItemHandlerTests
             _currentUserService,
             _taskItemRepository,
             _unitOfWork,
-            _dateTimeProvider);
+            _dateTimeProvider,
+            Substitute.For<ILogger<ImportTaskItemHandler>>());
     }
 }

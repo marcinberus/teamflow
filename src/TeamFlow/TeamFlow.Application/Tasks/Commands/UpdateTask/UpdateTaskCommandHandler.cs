@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Common.Models;
@@ -12,7 +13,8 @@ public sealed class UpdateTaskCommandHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
     IUnitOfWork unitOfWork,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider,
+    ILogger<UpdateTaskCommandHandler> logger)
     : IRequestHandler<UpdateTaskCommand, Result<UpdateTaskResult>>
 {
     public async Task<Result<UpdateTaskResult>> Handle(
@@ -25,6 +27,8 @@ public sealed class UpdateTaskCommandHandler(
 
         if (project is null)
         {
+            logger.LogInformation("Project {ProjectId} was not found while updating task {TaskId}.",
+                request.ProjectId, request.TaskId);
             return Result<UpdateTaskResult>.Failure(ErrorMessages.NotFound);
         }
 
@@ -35,6 +39,8 @@ public sealed class UpdateTaskCommandHandler(
                 currentUserId,
                 cancellationToken))
         {
+            logger.LogWarning("User {UserId} is not allowed to update tasks in project {ProjectId}.",
+                currentUserId, project.Id);
             return Result<UpdateTaskResult>.Failure(ErrorMessages.Forbidden);
         }
 
@@ -42,6 +48,7 @@ public sealed class UpdateTaskCommandHandler(
 
         if (taskItem is null || taskItem.ProjectId != request.ProjectId)
         {
+            logger.LogInformation("Task {TaskId} was not found in project {ProjectId}.", request.TaskId, request.ProjectId);
             return Result<UpdateTaskResult>.Failure(ErrorMessages.NotFound);
         }
 
@@ -52,6 +59,8 @@ public sealed class UpdateTaskCommandHandler(
                 assignedUserId,
                 cancellationToken))
         {
+            logger.LogInformation("User {AssignedUserId} is not a member of project {ProjectId} and cannot be assigned task {TaskId}.",
+                assignedUserId, project.Id, taskItem.Id);
             return Result<UpdateTaskResult>.Failure(ErrorMessages.AssignedUserNotProjectMember);
         }
 
@@ -64,6 +73,7 @@ public sealed class UpdateTaskCommandHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        logger.LogInformation("Task {TaskId} in project {ProjectId} was updated.", taskItem.Id, project.Id);
         return Result<UpdateTaskResult>.Success(new());
     }
 }

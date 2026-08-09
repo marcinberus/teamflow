@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Projects.Commands.DeleteProject;
@@ -21,7 +22,8 @@ public sealed class DeleteProjectCommandHandlerTests
         _handler = new DeleteProjectCommandHandler(
             _currentUserService,
             _projectRepository,
-            _unitOfWork);
+            _unitOfWork,
+            Substitute.For<ILogger<DeleteProjectCommandHandler>>());
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using TeamFlow.Application.Common;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Common.Models;
 using TeamFlow.Application.Tasks.Interfaces;
@@ -15,12 +16,15 @@ public class ImportTaskItemHandler(
     ICurrentUserService currentUserService,
     ITaskItemRepository taskItemRepository,
     IUnitOfWork unitOfWork,
-    IDateTimeProvider dateTimeProvider) : IRequestHandler<ImportTaskItemCommand, Result<ImportTaskItemResult>>
+    IDateTimeProvider dateTimeProvider,
+    ILogger<ImportTaskItemHandler> logger) : IRequestHandler<ImportTaskItemCommand, Result<ImportTaskItemResult>>
 {
     public async Task<Result<ImportTaskItemResult>> Handle(ImportTaskItemCommand request, CancellationToken cancellationToken)
     {
         if (!FileExtensionParser.TryParse(request.Extension, out var extension))
         {
+            logger.LogWarning("Task import for project {ProjectId} was rejected because extension {Extension} is invalid.",
+                request.ProjectId, request.Extension);
             return Result<ImportTaskItemResult>.Failure(ErrorMessages.InvalidExtension);
         }
 
@@ -48,6 +52,7 @@ public class ImportTaskItemHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        logger.LogInformation("Imported {TaskCount} tasks into project {ProjectId}.", tasksIds.Count, request.ProjectId);
         return Result<ImportTaskItemResult>.Success(new ImportTaskItemResult(tasksIds));
     }
 }

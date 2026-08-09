@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Users.Commands.LoginUser;
@@ -22,7 +23,8 @@ public class LoginUserCommandHandlerTests
         _handler = new LoginUserCommandHandler(
             _userRepository,
             _passwordHasher,
-            _jwtTokenGenerator);
+            _jwtTokenGenerator,
+            Substitute.For<ILogger<LoginUserCommandHandler>>());
     }
 
     [Fact]

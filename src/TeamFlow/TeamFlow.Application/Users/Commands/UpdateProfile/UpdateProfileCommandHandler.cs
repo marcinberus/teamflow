@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Common.Models;
@@ -10,7 +11,8 @@ public sealed class UpdateProfileCommandHandler(
     ICurrentUserService currentUserService,
     IUserRepository userRepository,
     IUnitOfWork unitOfWork,
-    IDateTimeProvider dateTimeProvider) : IRequestHandler<UpdateProfileCommand, Result<UpdateProfileResult>>
+    IDateTimeProvider dateTimeProvider,
+    ILogger<UpdateProfileCommandHandler> logger) : IRequestHandler<UpdateProfileCommand, Result<UpdateProfileResult>>
 {
     public async Task<Result<UpdateProfileResult>> Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
     {
@@ -19,6 +21,7 @@ public sealed class UpdateProfileCommandHandler(
         var user = await userRepository.GetByIdAsync(userId, cancellationToken);
         if (user is null)
         {
+            logger.LogInformation("User {UserId} was not found while updating their profile.", userId);
             return Result<UpdateProfileResult>.Failure(ErrorMessages.NotFound);
         }
 
@@ -26,6 +29,7 @@ public sealed class UpdateProfileCommandHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        logger.LogInformation("Profile for user {UserId} was updated.", userId);
         return Result<UpdateProfileResult>.Success(new());
     }
 }

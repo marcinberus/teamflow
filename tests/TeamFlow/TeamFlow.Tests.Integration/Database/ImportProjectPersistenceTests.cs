@@ -2,6 +2,7 @@ using System.Text;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging.Abstractions;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Projects.Commands.ImportProject;
 using TeamFlow.Domain.Entities;
@@ -56,7 +57,8 @@ public sealed class ImportProjectPersistenceTests : IntegrationTestBase
             new TestCurrentUserService(owner.Id),
             new ProjectRepository(_db),
             new UnitOfWork(_db),
-            new TestDateTimeProvider(now));
+            new TestDateTimeProvider(now),
+            NullLogger<ImportProjectHandler>.Instance);
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(
             "\"Apollo\",\"Landing mission\"\r\n\"Orion\",\"Deep space exploration\""));
 

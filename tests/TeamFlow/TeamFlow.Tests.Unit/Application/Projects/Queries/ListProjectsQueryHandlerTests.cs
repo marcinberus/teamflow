@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Projects.DTOs;
 using TeamFlow.Application.Projects.Interfaces;
 using TeamFlow.Application.Projects.Queries.ListProjects;
@@ -26,7 +27,9 @@ public sealed class ListProjectsQueryHandlerTests
         readService.ListProjectsAsync(2, 10, "Active", Arg.Any<CancellationToken>())
             .Returns((items, 15));
 
-        var handler = new ListProjectsQueryHandler(readService);
+        var handler = new ListProjectsQueryHandler(
+            readService,
+            Substitute.For<ILogger<ListProjectsQueryHandler>>());
 
         var result = await handler.Handle(new ListProjectsQuery(2, 10, "Active"), CancellationToken.None);
 

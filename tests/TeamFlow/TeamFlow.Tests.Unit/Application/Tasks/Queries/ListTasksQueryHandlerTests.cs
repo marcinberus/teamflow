@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Tasks.DTOs;
 using TeamFlow.Application.Tasks.Interfaces;
 using TeamFlow.Application.Tasks.Queries.ListTasks;
@@ -34,7 +35,9 @@ public sealed class ListTasksQueryHandlerTests
                 Arg.Any<CancellationToken>())
             .Returns((items, 11));
 
-        var handler = new ListTasksQueryHandler(readService);
+        var handler = new ListTasksQueryHandler(
+            readService,
+            Substitute.For<ILogger<ListTasksQueryHandler>>());
 
         var result = await handler.Handle(
             new ListTasksQuery(projectId, "InProgress", assignedUserId, 2, 10),

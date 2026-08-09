@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Projects.DTOs;
 using TeamFlow.Application.Projects.Interfaces;
@@ -29,7 +30,9 @@ public sealed class GetProjectStatisticsQueryHandlerTests
             "33.33");
         readService.GetStatisticsAsync(projectId, Arg.Any<CancellationToken>())
             .Returns(statistics);
-        var handler = new GetProjectStatisticsQueryHandler(readService);
+        var handler = new GetProjectStatisticsQueryHandler(
+            readService,
+            Substitute.For<ILogger<GetProjectStatisticsQueryHandler>>());
 
         var result = await handler.Handle(
             new GetProjectStatisticsQuery(projectId),
@@ -47,7 +50,9 @@ public sealed class GetProjectStatisticsQueryHandlerTests
         var projectId = Guid.NewGuid();
         readService.GetStatisticsAsync(projectId, Arg.Any<CancellationToken>())
             .Returns((ProjectStatisticsDto?)null);
-        var handler = new GetProjectStatisticsQueryHandler(readService);
+        var handler = new GetProjectStatisticsQueryHandler(
+            readService,
+            Substitute.For<ILogger<GetProjectStatisticsQueryHandler>>());
 
         var result = await handler.Handle(
             new GetProjectStatisticsQuery(projectId),

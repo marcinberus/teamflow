@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Projects.Commands.ChangeProjectStatus;
@@ -23,7 +24,8 @@ public sealed class ChangeProjectStatusCommandHandlerTests
             _currentUserService,
             _projectRepository,
             _unitOfWork,
-            _dateTimeProvider);
+            _dateTimeProvider,
+            Substitute.For<ILogger<ChangeProjectStatusCommandHandler>>());
     }
 
     [Fact]

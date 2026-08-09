@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Projects.Commands.RemoveMember;
@@ -22,7 +23,8 @@ public sealed class RemoveMemberCommandHandlerTests
         _handler = new RemoveMemberCommandHandler(
             _currentUserService,
             _projectRepository,
-            _unitOfWork);
+            _unitOfWork,
+            Substitute.For<ILogger<RemoveMemberCommandHandler>>());
     }
 
     [Fact]

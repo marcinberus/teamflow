@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Projects.Commands.AssignMember;
@@ -27,7 +28,8 @@ public sealed class AssignMemberCommandHandlerTests
             _projectRepository,
             _userRepository,
             _unitOfWork,
-            _dateTimeProvider);
+            _dateTimeProvider,
+            Substitute.For<ILogger<AssignMemberCommandHandler>>());
     }
 
     [Fact]

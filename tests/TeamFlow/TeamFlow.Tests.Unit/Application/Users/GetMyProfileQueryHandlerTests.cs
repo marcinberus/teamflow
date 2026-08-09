@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Users.DTOs;
@@ -17,7 +18,10 @@ public class GetMyProfileQueryHandlerTests
 
     public GetMyProfileQueryHandlerTests()
     {
-        _handler = new GetMyProfileQueryHandler(_currentUserService, _userReadService);
+        _handler = new GetMyProfileQueryHandler(
+            _currentUserService,
+            _userReadService,
+            Substitute.For<ILogger<GetMyProfileQueryHandler>>());
     }
 
     [Fact]

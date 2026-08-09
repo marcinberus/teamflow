@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Projects.DTOs;
 using TeamFlow.Application.Projects.Interfaces;
 using TeamFlow.Application.Projects.Queries.ListProjectMembers;
@@ -27,7 +28,9 @@ public sealed class ListProjectMembersQueryHandlerTests
         var readService = Substitute.For<IProjectReadService>();
         readService.ListMembersAsync(projectId, Arg.Any<CancellationToken>())
             .Returns(members);
-        var handler = new ListProjectMembersQueryHandler(readService);
+        var handler = new ListProjectMembersQueryHandler(
+            readService,
+            Substitute.For<ILogger<ListProjectMembersQueryHandler>>());
 
         var result = await handler.Handle(
             new ListProjectMembersQuery(projectId),
@@ -48,7 +51,9 @@ public sealed class ListProjectMembersQueryHandlerTests
         var readService = Substitute.For<IProjectReadService>();
         readService.ListMembersAsync(projectId, Arg.Any<CancellationToken>())
             .Returns(Array.Empty<ProjectMemberDto>());
-        var handler = new ListProjectMembersQueryHandler(readService);
+        var handler = new ListProjectMembersQueryHandler(
+            readService,
+            Substitute.For<ILogger<ListProjectMembersQueryHandler>>());
 
         var result = await handler.Handle(
             new ListProjectMembersQuery(projectId),

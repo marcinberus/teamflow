@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Common.Models;
@@ -12,7 +13,8 @@ public sealed class CreateTaskCommandHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
     IUnitOfWork unitOfWork,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider,
+    ILogger<CreateTaskCommandHandler> logger)
     : IRequestHandler<CreateTaskCommand, Result<CreateTaskResult>>
 {
     public async Task<Result<CreateTaskResult>> Handle(
@@ -25,6 +27,7 @@ public sealed class CreateTaskCommandHandler(
 
         if (project is null)
         {
+            logger.LogInformation("Project {ProjectId} was not found while creating a task.", request.ProjectId);
             return Result<CreateTaskResult>.Failure(ErrorMessages.NotFound);
         }
 
@@ -35,6 +38,8 @@ public sealed class CreateTaskCommandHandler(
                 currentUserId,
                 cancellationToken))
         {
+            logger.LogWarning("User {UserId} is not allowed to create tasks in project {ProjectId}.",
+                currentUserId, project.Id);
             return Result<CreateTaskResult>.Failure(ErrorMessages.Forbidden);
         }
 
@@ -46,6 +51,8 @@ public sealed class CreateTaskCommandHandler(
                 assignedUserId,
                 cancellationToken))
         {
+            logger.LogInformation("User {AssignedUserId} is not a member of project {ProjectId} and cannot be assigned a task.",
+                assignedUserId, project.Id);
             return Result<CreateTaskResult>.Failure(ErrorMessages.AssignedUserNotProjectMember);
         }
 
@@ -59,6 +66,8 @@ public sealed class CreateTaskCommandHandler(
         await taskItemRepository.AddAsync(task, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        logger.LogInformation("Task {TaskId} was created in project {ProjectId} and assigned to user {AssignedUserId}.",
+            task.Id, project.Id, assignedUserId);
         return Result<CreateTaskResult>.Success(new CreateTaskResult(task.Id));
     }
 }

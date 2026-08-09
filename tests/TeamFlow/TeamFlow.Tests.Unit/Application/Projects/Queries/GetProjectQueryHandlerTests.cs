@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Projects.DTOs;
 using TeamFlow.Application.Projects.Interfaces;
@@ -25,7 +26,9 @@ public sealed class GetProjectQueryHandlerTests
             null);
         readService.GetProjectByIdAsync(projectId, Arg.Any<CancellationToken>())
             .Returns(project);
-        var handler = new GetProjectQueryHandler(readService);
+        var handler = new GetProjectQueryHandler(
+            readService,
+            Substitute.For<ILogger<GetProjectQueryHandler>>());
 
         var result = await handler.Handle(new GetProjectQuery(projectId), CancellationToken.None);
 
@@ -41,7 +44,9 @@ public sealed class GetProjectQueryHandlerTests
         var projectId = Guid.NewGuid();
         readService.GetProjectByIdAsync(projectId, Arg.Any<CancellationToken>())
             .Returns((ProjectDetailsDto?)null);
-        var handler = new GetProjectQueryHandler(readService);
+        var handler = new GetProjectQueryHandler(
+            readService,
+            Substitute.For<ILogger<GetProjectQueryHandler>>());
 
         var result = await handler.Handle(new GetProjectQuery(projectId), CancellationToken.None);
 

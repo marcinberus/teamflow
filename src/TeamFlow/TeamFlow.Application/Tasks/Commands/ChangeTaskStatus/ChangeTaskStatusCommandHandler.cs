@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Common.Models;
@@ -13,7 +14,8 @@ public sealed class ChangeTaskStatusCommandHandler(
     IProjectRepository projectRepository,
     ITaskItemRepository taskItemRepository,
     IUnitOfWork unitOfWork,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider,
+    ILogger<ChangeTaskStatusCommandHandler> logger)
     : IRequestHandler<ChangeTaskStatusCommand, Result<ChangeTaskStatusResult>>
 {
     public async Task<Result<ChangeTaskStatusResult>> Handle(
@@ -26,6 +28,8 @@ public sealed class ChangeTaskStatusCommandHandler(
 
         if (project is null)
         {
+            logger.LogInformation("Project {ProjectId} was not found while changing task {TaskId} status.",
+                request.ProjectId, request.TaskId);
             return Result<ChangeTaskStatusResult>.Failure(ErrorMessages.NotFound);
         }
 
@@ -34,6 +38,8 @@ public sealed class ChangeTaskStatusCommandHandler(
                 currentUserService.UserId,
                 cancellationToken))
         {
+            logger.LogWarning("User {UserId} is not allowed to change task status in project {ProjectId}.",
+                currentUserService.UserId, project.Id);
             return Result<ChangeTaskStatusResult>.Failure(ErrorMessages.Forbidden);
         }
 
@@ -41,6 +47,7 @@ public sealed class ChangeTaskStatusCommandHandler(
 
         if (taskItem is null || taskItem.ProjectId != request.ProjectId)
         {
+            logger.LogInformation("Task {TaskId} was not found in project {ProjectId}.", request.TaskId, request.ProjectId);
             return Result<ChangeTaskStatusResult>.Failure(ErrorMessages.NotFound);
         }
 
@@ -48,6 +55,8 @@ public sealed class ChangeTaskStatusCommandHandler(
         taskItem.ChangeStatus(newStatus, dateTimeProvider.UtcNow);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        logger.LogInformation("Task {TaskId} in project {ProjectId} changed status to {Status}.",
+            taskItem.Id, project.Id, newStatus);
         return Result<ChangeTaskStatusResult>.Success(new());
     }
 }

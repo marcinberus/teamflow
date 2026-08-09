@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Users.Commands.RegisterUser;
@@ -26,7 +27,8 @@ public class RegisterUserCommandHandlerTests
             _unitOfWork,
             _passwordHasher,
             _jwtTokenGenerator,
-            _dateTimeProvider);
+            _dateTimeProvider,
+            Substitute.For<ILogger<RegisterUserCommandHandler>>());
     }
 
     [Fact]

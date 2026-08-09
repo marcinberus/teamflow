@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Common.Models;
@@ -13,12 +14,14 @@ public sealed class RegisterUserCommandHandler(
     IUnitOfWork unitOfWork,
     IPasswordHasher passwordHasher,
     IJwtTokenGenerator jwtTokenGenerator,
-    IDateTimeProvider dateTimeProvider) : IRequestHandler<RegisterUserCommand, Result<RegisterUserResult>>
+    IDateTimeProvider dateTimeProvider,
+    ILogger<RegisterUserCommandHandler> logger) : IRequestHandler<RegisterUserCommand, Result<RegisterUserResult>>
 {
     public async Task<Result<RegisterUserResult>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         if (await userRepository.ExistsByEmailAsync(request.Email, cancellationToken))
         {
+            logger.LogInformation("Registration was rejected because email {Email} is already in use.", request.Email);
             return Result<RegisterUserResult>.Failure(ErrorMessages.EmailAlreadyExists);
         }
 
@@ -26,6 +29,7 @@ public sealed class RegisterUserCommandHandler(
 
         if (!Enum.TryParse<Role>(request.Role, out var role))
         {
+            logger.LogWarning("Registration for email {Email} was rejected because role {Role} is invalid.", request.Email, request.Role);
             return Result<RegisterUserResult>.Failure(ErrorMessages.InvalidRole);
         }
 
@@ -42,6 +46,7 @@ public sealed class RegisterUserCommandHandler(
 
         var token = jwtTokenGenerator.GenerateToken(user.Id, user.Email, user.Role.ToString());
 
+        logger.LogInformation("User {UserId} registered with role {Role}.", user.Id, user.Role);
         return Result<RegisterUserResult>.Success(new RegisterUserResult(token, user.Id));
     }
 }

@@ -1,10 +1,13 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common.Models;
 using TeamFlow.Application.Tasks.Interfaces;
 
 namespace TeamFlow.Application.Tasks.Queries.ListTasks;
 
-public sealed class ListTasksQueryHandler(ITaskItemReadService taskItemReadService)
+public sealed class ListTasksQueryHandler(
+    ITaskItemReadService taskItemReadService,
+    ILogger<ListTasksQueryHandler> logger)
     : IRequestHandler<ListTasksQuery, Result<ListTasksResult>>
 {
     public async Task<Result<ListTasksResult>> Handle(
@@ -21,6 +24,12 @@ public sealed class ListTasksQueryHandler(ITaskItemReadService taskItemReadServi
 
         var result = new ListTasksResult(items, totalCount, request.Page, request.PageSize);
 
+        logger.LogInformation(
+            "Retrieved {TaskCount} tasks for project {ProjectId} on page {Page} with page size {PageSize}.",
+            items.Count,
+            request.ProjectId,
+            request.Page,
+            request.PageSize);
         return Result<ListTasksResult>.Success(result);
     }
 }
