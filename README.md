@@ -7,13 +7,14 @@
 - **ASP.NET Core 9** — Web API
 - **EF Core 9** — write side (repositories, Unit of Work)
 - **Dapper** — read-side SQL projections
-- **SQL Server / LocalDB** — database
+- **SQL Server ** — database
 - **MediatR** — CQRS (commands and queries)
 - **FluentValidation** — input validation via pipeline behavior
 - **JWT Bearer** — authentication
 - **BCrypt** — password hashing
 - **Swagger / OpenAPI**
 - **xUnit + FluentAssertions + NSubstitute** — unit and integration tests
+- **Grafana + Loki** - logs
 - **Testcontainers (SQL Server)** — integration tests of repositories with real database
 
 ## Architecture
@@ -73,6 +74,14 @@ dotnet watch --project src/TeamFlow/TeamFlow.Api --launch-profile Docker
 The API will be available at:
 - `https://localhost:7025`
 - `http://localhost:5119`
+
+### Viewing logs in Grafana
+
+When the API runs with `ASPNETCORE_ENVIRONMENT=Docker`, Serilog sends structured logs directly to Loki. Grafana is provisioned with Loki as its default data source.
+
+Open Grafana at `http://localhost:3000` (sign in with `admin` / `admin`), then **Explore**, select **Loki** and filter by labels:
+- service_name="teamflow-api",
+- environment="Docker"
 
 ## Swagger UI
 

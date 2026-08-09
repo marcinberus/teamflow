@@ -1,6 +1,6 @@
 ﻿using Serilog;
 using Serilog.Events;
-using System.Diagnostics;
+using Serilog.Sinks.Grafana.Loki;
 
 namespace TeamFlow.Api.Configuration;
 
@@ -20,10 +20,28 @@ public static class LoggerConfiguration
     {
         services.AddSerilog((services, loggerConfiguration) =>
         {
+            var environment = services.GetRequiredService<IWebHostEnvironment>();
+
             loggerConfiguration
                 .ReadFrom.Configuration(configuration)
                 .ReadFrom.Services(services)
                 .Enrich.FromLogContext();
+
+            if (environment.IsDockerEnvironment())
+            {
+                loggerConfiguration.WriteTo.GrafanaLoki(
+                    configuration["Grafana:LokiUrl"]
+                        ?? throw new InvalidOperationException("Grafana:LokiUrl is not configured."),
+                    labels:
+                    [
+                        new LokiLabel { Key = "service_name", Value = "teamflow-api" },
+                        new LokiLabel { Key = "environment", Value = environment.EnvironmentName }
+                    ],
+                    propertiesAsStructuredMetadata: ["RequestId", "UserId"],
+                    traceIdMode: LokiFieldDestination.StructuredMetadata,
+                    spanIdMode: LokiFieldDestination.StructuredMetadata
+                );
+            }
         });
 
         return services;
@@ -51,7 +69,6 @@ public static class LoggerConfiguration
             options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
             {
                 diagnosticContext.Set("RequestId", httpContext.TraceIdentifier);
-                diagnosticContext.Set("TraceId", Activity.Current?.TraceId.ToString());
                 diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
                 diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
 

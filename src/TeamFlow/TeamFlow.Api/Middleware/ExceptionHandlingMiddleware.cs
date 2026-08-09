@@ -36,7 +36,6 @@ public static class ExceptionHandlingExtensions
 
                 var logger = Log
                     .ForContext("SourceContext", "GlobalExceptionHandler")
-                    .ForContext("TraceId", traceId)
                     .ForContext("RequestId", context.TraceIdentifier)
                     .ForContext("RequestMethod", context.Request.Method)
                     .ForContext("RequestPath", requestPath);
