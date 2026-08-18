@@ -126,7 +126,7 @@ All routes are versioned under `/api/v1/`.
 | `GET` | `/api/v1/projects/{projectId}/members` | ✓ | List assigned project members |
 | `DELETE` | `/api/v1/projects/{projectId}/members/{userId}` | ✓ | Remove a project member (owner, manager, or admin); the project owner cannot be removed |
 | `POST` | `/api/v1/projects/{projectId}/tasks` | ✓ | Create a task; caller and optional assignee must belong to the project |
-| `POST` | `/api/v1/projects/{projectId}/tasks/import` | ✓ | Import tasks from a CSV file sent as `multipart/form-data` |
+| `POST` | `/api/v1/projects/{projectId}/tasks/import` | ✓ | Import tasks from a CSV of JSON file sent as `multipart/form-data` |
 | `GET` | `/api/v1/projects/{projectId}/statistics` | ✓ | Get task totals by status, assigned-member count, and a two-decimal completion percentage string |
 | `GET` | `/api/v1/projects/{projectId}/tasks?status=InProgress&assignedUserId={userId}&page=1&pageSize=20` | ✓ | List project tasks with pagination and optional status and assignee filters |
 | `PUT` | `/api/v1/projects/{projectId}/tasks/{taskId}` | ✓ | Update a task; caller and optional assignee must belong to the project |

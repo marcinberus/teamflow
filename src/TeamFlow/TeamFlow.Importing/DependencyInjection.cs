@@ -6,6 +6,7 @@ using TeamFlow.Importing.TaskItems.Models;
 using ProjectsCsvImporter = TeamFlow.Importing.Projects.Importerts.CsvImporter;
 using ProjectsJsonImporter = TeamFlow.Importing.Projects.Importerts.JsonSourceGenerationImporter;
 using TaskItemsCsvImporter = TeamFlow.Importing.TaskItems.Importers.CsvImporter;
+using TaskItemsJsonImporter = TeamFlow.Importing.TaskItems.Importers.JsonImporter;
 
 namespace TeamFlow.Importing;
 
@@ -18,6 +19,7 @@ public static class DependencyInjection
         services.AddScoped<IImportManager<ProjectLine>, ProjectImportManager>();
 
         services.AddScoped<ITaskItemImporter, TaskItemsCsvImporter>();
+        services.AddScoped<ITaskItemImporter, TaskItemsJsonImporter>();
         services.AddScoped<IImportManager<TaskItemLine>, TaskItemImportManager>();
 
         return services;
