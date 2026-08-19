@@ -31,13 +31,16 @@ public class JsonImporter : ITaskItemImporter
             {
                 yield return new TaskItemLine(
                     line.Title.AsMemory(),
-                    line.Description.AsMemory());
+                    line.Description.AsMemory(),
+                    line.Status.AsMemory());
             }
         }
     }
 }
 
-internal record JsonTaskItemLine(string Title, string Description);
+internal record JsonTaskItemLine(string Title, 
+    string Description, 
+    string Status);
 
 [JsonSourceGenerationOptions(
     PropertyNameCaseInsensitive = true,

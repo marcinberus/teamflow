@@ -8,6 +8,7 @@ using TeamFlow.Domain.Entities;
 using TeamFlow.Importing;
 using TeamFlow.Importing.FileExtensions;
 using TeamFlow.Importing.TaskItems.Models;
+using TeamFlow.Domain.Enums;
 
 namespace TeamFlow.Application.Tasks.Commands.ImportTask;
 
@@ -35,7 +36,12 @@ public class ImportTaskItemHandler(
             request.Stream,
             cancellationToken))
         {
-            // TODO: status from file
+            if (!Enum.TryParse<TaskItemStatus>(taskItemLine.Status.Span, ignoreCase: true, out var status)
+                || !Enum.IsDefined(status))
+            {
+                status = TaskItemStatus.Todo;
+            }
+
             var taskItem = TaskItem.Create(
                 request.ProjectId,
                 taskItemLine.Title.ToString(),
@@ -44,7 +50,8 @@ public class ImportTaskItemHandler(
                 currentUserService.UserId,
                 // TODO: due date from file
                 null,
-                dateTimeProvider.UtcNow);
+                dateTimeProvider.UtcNow,
+                status);
 
             await taskItemRepository.AddAsync(taskItem, cancellationToken);
             tasksIds.Add(taskItem.Id);

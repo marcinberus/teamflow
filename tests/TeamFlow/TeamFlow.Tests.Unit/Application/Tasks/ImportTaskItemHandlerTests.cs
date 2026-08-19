@@ -6,6 +6,7 @@ using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Tasks.Commands.ImportTask;
 using TeamFlow.Application.Tasks.Interfaces;
 using TeamFlow.Domain.Entities;
+using TeamFlow.Domain.Enums;
 using TeamFlow.Importing;
 using TeamFlow.Importing.FileExtensions;
 using TeamFlow.Importing.TaskItems.Models;
@@ -21,7 +22,7 @@ public sealed class ImportTaskItemHandlerTests
     private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
 
     [Fact]
-    public async Task Handle_ShouldAddImportedTasksWithCurrentUserAsAssignee()
+    public async Task Handle_ShouldAddImportedTasksWithCurrentUserAndParsedStatuses()
     {
         var projectId = Guid.NewGuid();
         var userId = Guid.NewGuid();
@@ -31,8 +32,8 @@ public sealed class ImportTaskItemHandlerTests
         var command = new ImportTaskItemCommand(projectId, stream, ".csv");
         var taskItemLines = new[]
         {
-            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory()),
-            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory())
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "InProgress".AsMemory()),
+            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory(), "done".AsMemory())
         };
         var handler = CreateHandler();
 
@@ -48,6 +49,7 @@ public sealed class ImportTaskItemHandlerTests
                 taskItem.ProjectId == projectId
                 && taskItem.Title == taskItemLines[0].Title.ToString()
                 && taskItem.Description == taskItemLines[0].Description.ToString()
+                && taskItem.Status == TaskItemStatus.InProgress
                 && taskItem.AssignedUserId == userId
                 && taskItem.CreatedAt == now),
             cancellationToken);
@@ -56,9 +58,31 @@ public sealed class ImportTaskItemHandlerTests
                 taskItem.ProjectId == projectId
                 && taskItem.Title == taskItemLines[1].Title.ToString()
                 && taskItem.Description == taskItemLines[1].Description.ToString()
+                && taskItem.Status == TaskItemStatus.Done
                 && taskItem.AssignedUserId == userId
                 && taskItem.CreatedAt == now),
             cancellationToken);
+    }
+
+    [Theory]
+    [InlineData("not-a-status")]
+    [InlineData("99")]
+    public async Task Handle_ShouldUseTodoStatus_WhenImportedStatusIsInvalidOrUndefined(string importedStatus)
+    {
+        using var stream = new MemoryStream();
+        var command = new ImportTaskItemCommand(Guid.NewGuid(), stream, ".csv");
+        var handler = CreateHandler();
+
+        ConfigureImport(
+            stream,
+            CancellationToken.None,
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), importedStatus.AsMemory()));
+
+        await handler.Handle(command, CancellationToken.None);
+
+        await _taskItemRepository.Received(1).AddAsync(
+            Arg.Is<TaskItem>(taskItem => taskItem.Status == TaskItemStatus.Todo),
+            CancellationToken.None);
     }
 
     [Fact]
@@ -74,8 +98,8 @@ public sealed class ImportTaskItemHandlerTests
         ConfigureImport(
             stream,
             cancellationToken,
-            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory()),
-            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory()));
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "Todo".AsMemory()),
+            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory(), "Done".AsMemory()));
         _taskItemRepository
             .AddAsync(
                 Arg.Do<TaskItem>(taskItem => importedTaskIds.Add(taskItem.Id)),

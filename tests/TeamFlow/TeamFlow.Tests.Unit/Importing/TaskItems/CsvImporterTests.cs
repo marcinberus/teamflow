@@ -10,8 +10,8 @@ public class CsvImporterTests
     [Fact]
     public async Task Import_ShouldParseRows_WhenFieldsAreSurroundedByQuotes()
     {
-        const string csv = "\"Design, API\",\"Define clear, accessible endpoints.\"\r\n"
-            + "\"Plain title\",\"Plain description\"";
+        const string csv = "\"Design, API\",\"Define clear, accessible endpoints.\",\"Todo\"\r\n"
+            + "\"Plain title\",\"Plain description\",\"InProgress\"";
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
         var importer = new CsvImporter();
@@ -22,16 +22,18 @@ public class CsvImporterTests
             rows.Add(row);
         }
 
-        rows.Select(row => (row.Title.ToString(), row.Description.ToString())).Should().Equal(
-            ("Design, API", "Define clear, accessible endpoints."),
-            ("Plain title", "Plain description"));
+        rows.Select(row => 
+            (row.Title.ToString(), row.Description.ToString(), row.Status.ToString()))
+                .Should().Equal(
+            ("Design, API", "Define clear, accessible endpoints.", "Todo"),
+            ("Plain title", "Plain description", "InProgress"));
     }
 
     [Theory]
     [InlineData("Design API,Description")]
     [InlineData("\"Design API\",Description")]
     [InlineData("Design API,\"Description\"")]
-    [InlineData("\"Design API\",\"Description\",\"Extra\"")]
+    [InlineData("\"Design API\",\"Description\",\"Todo\",\"Extra\"")]
     public async Task Import_ShouldFail_WhenFieldsAreNotSurroundedByQuotes(string csv)
     {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
@@ -72,7 +74,7 @@ public class CsvImporterTests
     [Fact]
     public async Task Import_ShouldIgnoreBlankLines_AndReportTheOriginalLineNumber()
     {
-        const string csv = "\r\n\"Valid\",\"Row\"\r\n\r\nInvalid";
+        const string csv = "\r\n\"Valid\",\"Row\",\"Todo\"\r\n\r\nInvalid";
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
         var importer = new CsvImporter();

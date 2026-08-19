@@ -24,9 +24,9 @@ public class JsonImporterTests
     {
         const string json = """
             [
-              { "title": "Design API", "description": "Define clear endpoints." },
+              { "title": "Design API", "description": "Define clear endpoints.", "status": "Todo" },
               null,
-              { "TITLE": "Implement API", "DESCRIPTION": "Build the endpoints." }
+              { "TITLE": "Implement API", "DESCRIPTION": "Build the endpoints.", "STATUS": "Todo" }
             ]
             """;
 
@@ -39,8 +39,11 @@ public class JsonImporterTests
             rows.Add(row);
         }
 
-        rows.Select(row => (row.Title.ToString(), row.Description.ToString())).Should().Equal(
-            ("Design API", "Define clear endpoints."),
-            ("Implement API", "Build the endpoints."));
+        rows
+            .Select(row => 
+                (row.Title.ToString(), row.Description.ToString(), row.Status.ToString()))
+            .Should().Equal(
+                ("Design API", "Define clear endpoints.", "Todo"),
+                ("Implement API", "Build the endpoints.", "Todo"));
     }
 }

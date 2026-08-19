@@ -21,5 +21,7 @@
   </Folder>
   <Folder Name="/tests/TeamFlow/TestData/">
     <File Path="tests/TeamFlow/TestData/projects.csv" />
+    <File Path="tests/TeamFlow/TestData/projects.json" />
+    <File Path="tests/TeamFlow/TestData/tasks.csv" />
   </Folder>
 </Solution>

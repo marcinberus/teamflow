@@ -40,28 +40,49 @@ public class CsvImporter : ITaskItemImporter
     private static TaskItemLine ParseLine(ReadOnlyMemory<char> line, int lineNumber)
     {
         var lineValue = line.Span;
-        var separatorIndex = lineValue.IndexOf(Separator.AsSpan());
+        var separatorValue = Separator.AsSpan();
+        var separatorIndex = lineValue.IndexOf(separatorValue);
 
         if (lineValue.Length < 5
             || lineValue[0] != Quote
             || lineValue[^1] != Quote
-            || separatorIndex < 1
-            || separatorIndex + Separator.Length > lineValue.Length - 1)
+            || separatorIndex < 1)
         {
             throw CreateInvalidRowException(lineNumber);
         }
 
-        var title = line[1..separatorIndex];
-        var description = line[(separatorIndex + Separator.Length)..^1];
+        var startIndex = 1;
+        var endIndex = separatorIndex;
+        var title = line[startIndex..endIndex];
 
-        if (title.Span.IndexOf(Quote) >= 0 || description.Span.IndexOf(Quote) >= 0)
+
+        startIndex = endIndex + separatorValue.Length;
+        var remainingLine = line[startIndex..^1].Span;
+        var offset = remainingLine.IndexOf(separatorValue);
+
+        if (offset < 0)
+        {
+            throw CreateInvalidRowException(lineNumber);
+        }
+
+        endIndex = startIndex + offset;
+        var description = line[startIndex..endIndex];
+
+
+        startIndex = endIndex + separatorValue.Length;
+        var status = line[startIndex..^1];
+
+        if (title.Span.IndexOf(Quote) >= 0 
+            || description.Span.IndexOf(Quote) >= 0 
+            || status.Span.IndexOf(Quote) >= 0)
         {
             throw CreateInvalidRowException(lineNumber);
         }
 
         return new TaskItemLine(
             title,
-            description);
+            description,
+            status);
     }
 
     private static FormatException CreateInvalidRowException(int lineNumber)

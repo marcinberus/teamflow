@@ -21,7 +21,8 @@ public sealed class TaskItem : Entity
         string description,
         Guid? assignedUserId,
         DateTimeOffset? dueDate,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        TaskItemStatus status = TaskItemStatus.Todo)
     {
         return new TaskItem
         {
@@ -29,7 +30,7 @@ public sealed class TaskItem : Entity
             ProjectId = projectId,
             Title = title,
             Description = description,
-            Status = TaskItemStatus.Todo,
+            Status = status,
             AssignedUserId = assignedUserId,
             DueDate = dueDate,
             CreatedAt = now
