@@ -1,14 +1,15 @@
 ﻿using MediatR;
-using TeamFlow.Application.Common;
 using Microsoft.Extensions.Logging;
+using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Common.Models;
 using TeamFlow.Application.Tasks.Interfaces;
+using TeamFlow.Application.Users.Interfaces;
 using TeamFlow.Domain.Entities;
+using TeamFlow.Domain.Enums;
 using TeamFlow.Importing;
 using TeamFlow.Importing.FileExtensions;
 using TeamFlow.Importing.TaskItems.Models;
-using TeamFlow.Domain.Enums;
 
 namespace TeamFlow.Application.Tasks.Commands.ImportTask;
 
@@ -16,6 +17,7 @@ public class ImportTaskItemHandler(
     IImportManager<TaskItemLine> importManager,
     ICurrentUserService currentUserService,
     ITaskItemRepository taskItemRepository,
+    IUserRepository userRepository,
     IUnitOfWork unitOfWork,
     IDateTimeProvider dateTimeProvider,
     ILogger<ImportTaskItemHandler> logger) : IRequestHandler<ImportTaskItemCommand, Result<ImportTaskItemResult>>
@@ -42,12 +44,23 @@ public class ImportTaskItemHandler(
                 status = TaskItemStatus.Todo;
             }
 
+            var isExistingUser = false;
+            if (!Guid.TryParse(taskItemLine.UserId.ToString(), out var userId))
+            {
+                userId = currentUserService.UserId;
+                isExistingUser = true;
+            }
+
+            if (!isExistingUser && !(await userRepository.ExistsByUserIdAsync(userId, cancellationToken)))
+            {
+                userId = currentUserService.UserId;
+            }
+
             var taskItem = TaskItem.Create(
                 request.ProjectId,
                 taskItemLine.Title.ToString(),
                 taskItemLine.Description.ToString(),
-                // TODO: assigned user from file
-                currentUserService.UserId,
+                userId,
                 // TODO: due date from file
                 null,
                 dateTimeProvider.UtcNow,

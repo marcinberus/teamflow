@@ -70,6 +70,19 @@ public class CsvImporter : ITaskItemImporter
 
 
         startIndex = endIndex + separatorValue.Length;
+        remainingLine = line[startIndex..^1].Span;
+        offset = remainingLine.IndexOf(separatorValue);
+
+        if (offset < 0)
+        {
+            throw CreateInvalidRowException(lineNumber);
+        }
+
+        endIndex = startIndex + offset;
+        var userId = line[startIndex..endIndex];
+
+
+        startIndex = endIndex + separatorValue.Length;
         var status = line[startIndex..^1];
 
         if (title.Span.IndexOf(Quote) >= 0 
@@ -82,6 +95,7 @@ public class CsvImporter : ITaskItemImporter
         return new TaskItemLine(
             title,
             description,
+            userId,
             status);
     }
 

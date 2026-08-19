@@ -5,6 +5,7 @@ using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Tasks.Commands.ImportTask;
 using TeamFlow.Application.Tasks.Interfaces;
+using TeamFlow.Application.Users.Interfaces;
 using TeamFlow.Domain.Entities;
 using TeamFlow.Domain.Enums;
 using TeamFlow.Importing;
@@ -18,11 +19,12 @@ public sealed class ImportTaskItemHandlerTests
     private readonly IImportManager<TaskItemLine> _taskItemImportManager = Substitute.For<IImportManager<TaskItemLine>>();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly ITaskItemRepository _taskItemRepository = Substitute.For<ITaskItemRepository>();
+    private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
 
     [Fact]
-    public async Task Handle_ShouldAddImportedTasksWithCurrentUserAndParsedStatuses()
+    public async Task Handle_ShouldAddImportedTasksWithValidatedUsersAndParsedStatuses()
     {
         var projectId = Guid.NewGuid();
         var userId = Guid.NewGuid();
@@ -30,15 +32,17 @@ public sealed class ImportTaskItemHandlerTests
         var cancellationToken = new CancellationTokenSource().Token;
         using var stream = new MemoryStream();
         var command = new ImportTaskItemCommand(projectId, stream, ".csv");
+        var firstAssignedUserId = Guid.NewGuid();
         var taskItemLines = new[]
         {
-            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "InProgress".AsMemory()),
-            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory(), "done".AsMemory())
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), firstAssignedUserId.ToString().AsMemory(), "InProgress".AsMemory()),
+            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory(), "not-a-guid".AsMemory(), "done".AsMemory())
         };
         var handler = CreateHandler();
 
         _currentUserService.UserId.Returns(userId);
         _dateTimeProvider.UtcNow.Returns(now);
+        _userRepository.ExistsByUserIdAsync(firstAssignedUserId, cancellationToken).Returns(true);
         ConfigureImport(stream, cancellationToken, taskItemLines);
 
         var result = await handler.Handle(command, cancellationToken);
@@ -50,7 +54,7 @@ public sealed class ImportTaskItemHandlerTests
                 && taskItem.Title == taskItemLines[0].Title.ToString()
                 && taskItem.Description == taskItemLines[0].Description.ToString()
                 && taskItem.Status == TaskItemStatus.InProgress
-                && taskItem.AssignedUserId == userId
+                && taskItem.AssignedUserId == firstAssignedUserId
                 && taskItem.CreatedAt == now),
             cancellationToken);
         await _taskItemRepository.Received(1).AddAsync(
@@ -62,6 +66,8 @@ public sealed class ImportTaskItemHandlerTests
                 && taskItem.AssignedUserId == userId
                 && taskItem.CreatedAt == now),
             cancellationToken);
+        await _userRepository.Received(1).ExistsByUserIdAsync(firstAssignedUserId, cancellationToken);
+        await _userRepository.DidNotReceive().ExistsByUserIdAsync(userId, cancellationToken);
     }
 
     [Theory]
@@ -76,7 +82,7 @@ public sealed class ImportTaskItemHandlerTests
         ConfigureImport(
             stream,
             CancellationToken.None,
-            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), importedStatus.AsMemory()));
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "invalid-user-id".AsMemory(), importedStatus.AsMemory()));
 
         await handler.Handle(command, CancellationToken.None);
 
@@ -98,8 +104,8 @@ public sealed class ImportTaskItemHandlerTests
         ConfigureImport(
             stream,
             cancellationToken,
-            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "Todo".AsMemory()),
-            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory(), "Done".AsMemory()));
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "invalid-user-id".AsMemory(), "Todo".AsMemory()),
+            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory(), "invalid-user-id".AsMemory(), "Done".AsMemory()));
         _taskItemRepository
             .AddAsync(
                 Arg.Do<TaskItem>(taskItem => importedTaskIds.Add(taskItem.Id)),
@@ -111,6 +117,30 @@ public sealed class ImportTaskItemHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value!.TaskItemsIds.Should().Equal(importedTaskIds);
         await _unitOfWork.Received(1).SaveChangesAsync(cancellationToken);
+    }
+
+    [Fact]
+    public async Task Handle_ShouldAssignCurrentUser_WhenImportedUserDoesNotExist()
+    {
+        var importedUserId = Guid.NewGuid();
+        var currentUserId = Guid.NewGuid();
+        using var stream = new MemoryStream();
+        var command = new ImportTaskItemCommand(Guid.NewGuid(), stream, ".csv");
+        var handler = CreateHandler();
+
+        _currentUserService.UserId.Returns(currentUserId);
+        _userRepository.ExistsByUserIdAsync(importedUserId, CancellationToken.None).Returns(false);
+        ConfigureImport(
+            stream,
+            CancellationToken.None,
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), importedUserId.ToString().AsMemory(), "Todo".AsMemory()));
+
+        await handler.Handle(command, CancellationToken.None);
+
+        await _taskItemRepository.Received(1).AddAsync(
+            Arg.Is<TaskItem>(taskItem => taskItem.AssignedUserId == currentUserId),
+            CancellationToken.None);
+        await _userRepository.Received(1).ExistsByUserIdAsync(importedUserId, CancellationToken.None);
     }
 
     [Fact]
@@ -161,6 +191,7 @@ public sealed class ImportTaskItemHandlerTests
             _taskItemImportManager,
             _currentUserService,
             _taskItemRepository,
+            _userRepository,
             _unitOfWork,
             _dateTimeProvider,
             Substitute.For<ILogger<ImportTaskItemHandler>>());

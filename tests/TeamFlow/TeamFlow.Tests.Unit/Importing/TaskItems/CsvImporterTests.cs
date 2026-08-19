@@ -10,8 +10,8 @@ public class CsvImporterTests
     [Fact]
     public async Task Import_ShouldParseRows_WhenFieldsAreSurroundedByQuotes()
     {
-        const string csv = "\"Design, API\",\"Define clear, accessible endpoints.\",\"Todo\"\r\n"
-            + "\"Plain title\",\"Plain description\",\"InProgress\"";
+        const string csv = "\"Design, API\",\"Define clear, accessible endpoints.\",\"user-1\",\"Todo\"\r\n"
+            + "\"Plain title\",\"Plain description\",\"user-2\",\"InProgress\"";
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
         var importer = new CsvImporter();
@@ -23,17 +23,17 @@ public class CsvImporterTests
         }
 
         rows.Select(row => 
-            (row.Title.ToString(), row.Description.ToString(), row.Status.ToString()))
+            (row.Title.ToString(), row.Description.ToString(), row.UserId.ToString(), row.Status.ToString()))
                 .Should().Equal(
-            ("Design, API", "Define clear, accessible endpoints.", "Todo"),
-            ("Plain title", "Plain description", "InProgress"));
+            ("Design, API", "Define clear, accessible endpoints.", "user-1", "Todo"),
+            ("Plain title", "Plain description", "user-2", "InProgress"));
     }
 
     [Theory]
     [InlineData("Design API,Description")]
     [InlineData("\"Design API\",Description")]
     [InlineData("Design API,\"Description\"")]
-    [InlineData("\"Design API\",\"Description\",\"Todo\",\"Extra\"")]
+    [InlineData("\"Design API\",\"Description\",\"user-1\",\"Todo\",\"Extra\"")]
     public async Task Import_ShouldFail_WhenFieldsAreNotSurroundedByQuotes(string csv)
     {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
@@ -52,8 +52,9 @@ public class CsvImporterTests
     }
 
     [Theory]
-    [InlineData("\"Design API\"More\",\"Description\"")]
-    [InlineData("\"Design API\",\"Description\"More\"")]
+    [InlineData("\"Design API\"More\",\"Description\",\"user-1\",\"Todo\"")]
+    [InlineData("\"Design API\",\"Description\"More\",\"user-1\",\"Todo\"")]
+    [InlineData("\"Design API\",\"Description\",\"user-1\",\"Todo\"More\"")]
     public async Task Import_ShouldFail_WhenFieldContainsAdditionalQuote(string csv)
     {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
@@ -74,7 +75,7 @@ public class CsvImporterTests
     [Fact]
     public async Task Import_ShouldIgnoreBlankLines_AndReportTheOriginalLineNumber()
     {
-        const string csv = "\r\n\"Valid\",\"Row\",\"Todo\"\r\n\r\nInvalid";
+        const string csv = "\r\n\"Valid\",\"Row\",\"user-1\",\"Todo\"\r\n\r\nInvalid";
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
         var importer = new CsvImporter();
@@ -94,5 +95,6 @@ public class CsvImporterTests
         rows.Should().ContainSingle();
         rows[0].Title.ToString().Should().Be("Valid");
         rows[0].Description.ToString().Should().Be("Row");
+        rows[0].UserId.ToString().Should().Be("user-1");
     }
 }
