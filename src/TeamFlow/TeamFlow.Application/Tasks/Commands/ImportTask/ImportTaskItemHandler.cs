@@ -56,13 +56,17 @@ public class ImportTaskItemHandler(
                 userId = currentUserService.UserId;
             }
 
+            DateTimeOffset? dueDate = 
+                !DateTimeOffset.TryParse(taskItemLine.DueDate.ToString(), out var parsedDueDate) 
+                ? null 
+                : parsedDueDate;
+
             var taskItem = TaskItem.Create(
                 request.ProjectId,
                 taskItemLine.Title.ToString(),
                 taskItemLine.Description.ToString(),
                 userId,
-                // TODO: due date from file
-                null,
+                dueDate,
                 dateTimeProvider.UtcNow,
                 status);
 

@@ -35,8 +35,8 @@ public sealed class ImportTaskItemHandlerTests
         var firstAssignedUserId = Guid.NewGuid();
         var taskItemLines = new[]
         {
-            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), firstAssignedUserId.ToString().AsMemory(), "InProgress".AsMemory()),
-            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory(), "not-a-guid".AsMemory(), "done".AsMemory())
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), firstAssignedUserId.ToString().AsMemory(), "2027-05-20T10:00:00+00:00".AsMemory(), "InProgress".AsMemory()),
+            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory(), "not-a-guid".AsMemory(), "2027-06-21T11:30:00+00:00".AsMemory(), "done".AsMemory())
         };
         var handler = CreateHandler();
 
@@ -55,6 +55,7 @@ public sealed class ImportTaskItemHandlerTests
                 && taskItem.Description == taskItemLines[0].Description.ToString()
                 && taskItem.Status == TaskItemStatus.InProgress
                 && taskItem.AssignedUserId == firstAssignedUserId
+                && taskItem.DueDate == DateTimeOffset.Parse(taskItemLines[0].DueDate.ToString())
                 && taskItem.CreatedAt == now),
             cancellationToken);
         await _taskItemRepository.Received(1).AddAsync(
@@ -64,6 +65,7 @@ public sealed class ImportTaskItemHandlerTests
                 && taskItem.Description == taskItemLines[1].Description.ToString()
                 && taskItem.Status == TaskItemStatus.Done
                 && taskItem.AssignedUserId == userId
+                && taskItem.DueDate == DateTimeOffset.Parse(taskItemLines[1].DueDate.ToString())
                 && taskItem.CreatedAt == now),
             cancellationToken);
         await _userRepository.Received(1).ExistsByUserIdAsync(firstAssignedUserId, cancellationToken);
@@ -82,12 +84,55 @@ public sealed class ImportTaskItemHandlerTests
         ConfigureImport(
             stream,
             CancellationToken.None,
-            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "invalid-user-id".AsMemory(), importedStatus.AsMemory()));
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "invalid-user-id".AsMemory(), "2027-05-20".AsMemory(), importedStatus.AsMemory()));
 
         await handler.Handle(command, CancellationToken.None);
 
         await _taskItemRepository.Received(1).AddAsync(
             Arg.Is<TaskItem>(taskItem => taskItem.Status == TaskItemStatus.Todo),
+            CancellationToken.None);
+    }
+
+    [Theory]
+    [InlineData("2027-05-20T10:00:00Z", 0)]
+    [InlineData("2027-05-20T10:00:00+02:00", 120)]
+    public async Task Handle_ShouldParseImportedDueDate(string importedDueDate, int offsetInMinutes)
+    {
+        using var stream = new MemoryStream();
+        var command = new ImportTaskItemCommand(Guid.NewGuid(), stream, ".csv");
+        var expectedDueDate = new DateTimeOffset(2027, 5, 20, 10, 0, 0, TimeSpan.FromMinutes(offsetInMinutes));
+        var handler = CreateHandler();
+
+        ConfigureImport(
+            stream,
+            CancellationToken.None,
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "invalid-user-id".AsMemory(), importedDueDate.AsMemory(), "Todo".AsMemory()));
+
+        await handler.Handle(command, CancellationToken.None);
+
+        await _taskItemRepository.Received(1).AddAsync(
+            Arg.Is<TaskItem>(taskItem => taskItem.DueDate == expectedDueDate),
+            CancellationToken.None);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("not-a-date")]
+    public async Task Handle_ShouldUseNullDueDate_WhenImportedDueDateCannotBeParsed(string importedDueDate)
+    {
+        using var stream = new MemoryStream();
+        var command = new ImportTaskItemCommand(Guid.NewGuid(), stream, ".csv");
+        var handler = CreateHandler();
+
+        ConfigureImport(
+            stream,
+            CancellationToken.None,
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "invalid-user-id".AsMemory(), importedDueDate.AsMemory(), "Todo".AsMemory()));
+
+        await handler.Handle(command, CancellationToken.None);
+
+        await _taskItemRepository.Received(1).AddAsync(
+            Arg.Is<TaskItem>(taskItem => taskItem.DueDate == null),
             CancellationToken.None);
     }
 
@@ -104,8 +149,8 @@ public sealed class ImportTaskItemHandlerTests
         ConfigureImport(
             stream,
             cancellationToken,
-            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "invalid-user-id".AsMemory(), "Todo".AsMemory()),
-            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory(), "invalid-user-id".AsMemory(), "Done".AsMemory()));
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), "invalid-user-id".AsMemory(), "2027-05-20".AsMemory(), "Todo".AsMemory()),
+            new TaskItemLine("Implement API".AsMemory(), "Build endpoints".AsMemory(), "invalid-user-id".AsMemory(), "2027-06-21".AsMemory(), "Done".AsMemory()));
         _taskItemRepository
             .AddAsync(
                 Arg.Do<TaskItem>(taskItem => importedTaskIds.Add(taskItem.Id)),
@@ -133,7 +178,7 @@ public sealed class ImportTaskItemHandlerTests
         ConfigureImport(
             stream,
             CancellationToken.None,
-            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), importedUserId.ToString().AsMemory(), "Todo".AsMemory()));
+            new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), importedUserId.ToString().AsMemory(), "2027-05-20".AsMemory(), "Todo".AsMemory()));
 
         await handler.Handle(command, CancellationToken.None);
 

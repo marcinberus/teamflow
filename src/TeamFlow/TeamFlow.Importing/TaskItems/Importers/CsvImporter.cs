@@ -81,12 +81,26 @@ public class CsvImporter : ITaskItemImporter
         endIndex = startIndex + offset;
         var userId = line[startIndex..endIndex];
 
+        startIndex = endIndex + separatorValue.Length;
+        remainingLine = line[startIndex..^1].Span;
+        offset = remainingLine.IndexOf(separatorValue);
+
+        if (offset < 0)
+        {
+            throw CreateInvalidRowException(lineNumber);
+        }
+
+        endIndex = startIndex + offset;
+        var dueDate = line[startIndex..endIndex];
+
 
         startIndex = endIndex + separatorValue.Length;
         var status = line[startIndex..^1];
 
         if (title.Span.IndexOf(Quote) >= 0 
             || description.Span.IndexOf(Quote) >= 0 
+            || userId.Span.IndexOf(Quote) >= 0
+            || dueDate.Span.IndexOf(Quote) >= 0
             || status.Span.IndexOf(Quote) >= 0)
         {
             throw CreateInvalidRowException(lineNumber);
@@ -96,6 +110,7 @@ public class CsvImporter : ITaskItemImporter
             title,
             description,
             userId,
+            dueDate,
             status);
     }
 

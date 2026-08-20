@@ -33,6 +33,7 @@ public class JsonImporter : ITaskItemImporter
                     line.Title.AsMemory(),
                     line.Description.AsMemory(),
                     line.UserId.AsMemory(),
+                    line.DueDate.AsMemory(),
                     line.Status.AsMemory());
             }
         }
@@ -42,6 +43,7 @@ public class JsonImporter : ITaskItemImporter
 internal record JsonTaskItemLine(string Title, 
     string Description,
     string UserId,
+    string DueDate,
     string Status);
 
 [JsonSourceGenerationOptions(
