@@ -13,7 +13,7 @@ public class CsvImporter : ITaskItemImporter
     public bool CanImport(FileExtension fileExtension) => fileExtension == FileExtension.Csv;
 
     public async IAsyncEnumerable<TaskItemLine> Import(
-        Stream stream, 
+        Stream stream,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (!stream.CanRead)
@@ -55,50 +55,15 @@ public class CsvImporter : ITaskItemImporter
         var endIndex = separatorIndex;
         var title = line[startIndex..endIndex];
 
-
-        startIndex = endIndex + separatorValue.Length;
-        var remainingLine = line[startIndex..^1].Span;
-        var offset = remainingLine.IndexOf(separatorValue);
-
-        if (offset < 0)
-        {
-            throw CreateInvalidRowException(lineNumber);
-        }
-
-        endIndex = startIndex + offset;
-        var description = line[startIndex..endIndex];
-
-
-        startIndex = endIndex + separatorValue.Length;
-        remainingLine = line[startIndex..^1].Span;
-        offset = remainingLine.IndexOf(separatorValue);
-
-        if (offset < 0)
-        {
-            throw CreateInvalidRowException(lineNumber);
-        }
-
-        endIndex = startIndex + offset;
-        var userId = line[startIndex..endIndex];
-
-        startIndex = endIndex + separatorValue.Length;
-        remainingLine = line[startIndex..^1].Span;
-        offset = remainingLine.IndexOf(separatorValue);
-
-        if (offset < 0)
-        {
-            throw CreateInvalidRowException(lineNumber);
-        }
-
-        endIndex = startIndex + offset;
-        var dueDate = line[startIndex..endIndex];
-
+        var description = GetElement(ref endIndex, line, lineNumber);
+        var userId = GetElement(ref endIndex, line, lineNumber);
+        var dueDate = GetElement(ref endIndex, line, lineNumber);
 
         startIndex = endIndex + separatorValue.Length;
         var status = line[startIndex..^1];
 
-        if (title.Span.IndexOf(Quote) >= 0 
-            || description.Span.IndexOf(Quote) >= 0 
+        if (title.Span.IndexOf(Quote) >= 0
+            || description.Span.IndexOf(Quote) >= 0
             || userId.Span.IndexOf(Quote) >= 0
             || dueDate.Span.IndexOf(Quote) >= 0
             || status.Span.IndexOf(Quote) >= 0)
@@ -112,6 +77,22 @@ public class CsvImporter : ITaskItemImporter
             userId,
             dueDate,
             status);
+    }
+
+    private static ReadOnlyMemory<char> GetElement(ref int endIndex, ReadOnlyMemory<char> line, int lineNumber)
+    {
+        var separatorValue = Separator.AsSpan();
+        var startIndex = endIndex + separatorValue.Length;
+        var remainingLine = line[startIndex..^1].Span;
+        var offset = remainingLine.IndexOf(separatorValue);
+
+        if (offset < 0)
+        {
+            throw CreateInvalidRowException(lineNumber);
+        }
+
+        endIndex = startIndex + offset;
+        return line[startIndex..endIndex];
     }
 
     private static FormatException CreateInvalidRowException(int lineNumber)
