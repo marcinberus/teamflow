@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 using TeamFlow.Application.Common;
 using TeamFlow.Application.Common.Interfaces;
 using TeamFlow.Application.Common.Models;
+using TeamFlow.Application.Projects.Interfaces;
 using TeamFlow.Application.Tasks.Interfaces;
-using TeamFlow.Application.Users.Interfaces;
 using TeamFlow.Domain.Entities;
 using TeamFlow.Domain.Enums;
 using TeamFlow.Importing;
@@ -17,7 +17,7 @@ public class ImportTaskItemHandler(
     IImportManager<TaskItemLine> importManager,
     ICurrentUserService currentUserService,
     ITaskItemRepository taskItemRepository,
-    IUserRepository userRepository,
+    IProjectRepository projectRepository,
     IUnitOfWork unitOfWork,
     IDateTimeProvider dateTimeProvider,
     ILogger<ImportTaskItemHandler> logger) : IRequestHandler<ImportTaskItemCommand, Result<ImportTaskItemResult>>
@@ -29,6 +29,21 @@ public class ImportTaskItemHandler(
             logger.LogWarning("Task import for project {ProjectId} was rejected because extension {Extension} is invalid.",
                 request.ProjectId, request.Extension);
             return Result<ImportTaskItemResult>.Failure(ErrorMessages.InvalidExtension);
+        }
+
+        var project = await projectRepository.GetByIdWithMembersAsync(request.ProjectId, cancellationToken);
+        if (project == null)
+        {
+            logger.LogWarning("Task import for project {ProjectId} was rejected because project does not exist.",
+                request.ProjectId);
+            return Result<ImportTaskItemResult>.Failure(ErrorMessages.NotFound);
+        }
+
+        if (!project.HasMember(currentUserService.UserId))
+        {
+            logger.LogWarning("Task import for project {ProjectId} was rejected because current user is not a project member.",
+                request.ProjectId);
+            return Result<ImportTaskItemResult>.Failure(ErrorMessages.Forbidden);
         }
 
         var tasksIds = new List<Guid>();
@@ -44,21 +59,14 @@ public class ImportTaskItemHandler(
                 status = TaskItemStatus.Todo;
             }
 
-            var isExistingUser = false;
-            if (!Guid.TryParse(taskItemLine.UserId.ToString(), out var userId))
-            {
-                userId = currentUserService.UserId;
-                isExistingUser = true;
-            }
+            var userId = Guid.TryParse(taskItemLine.UserId.Span, out var importedUserId)
+                            && project.HasMember(importedUserId)
+                        ? importedUserId
+                        : currentUserService.UserId;
 
-            if (!isExistingUser && !(await userRepository.ExistsByUserIdAsync(userId, cancellationToken)))
-            {
-                userId = currentUserService.UserId;
-            }
-
-            DateTimeOffset? dueDate = 
-                !DateTimeOffset.TryParse(taskItemLine.DueDate.ToString(), out var parsedDueDate) 
-                ? null 
+            DateTimeOffset? dueDate =
+                !DateTimeOffset.TryParse(taskItemLine.DueDate.ToString(), out var parsedDueDate)
+                ? null
                 : parsedDueDate;
 
             var taskItem = TaskItem.Create(
