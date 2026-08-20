@@ -69,8 +69,7 @@ public class ImportTaskItemHandler(
                 ? null
                 : parsedDueDate;
 
-            var taskItem = TaskItem.Create(
-                request.ProjectId,
+            var taskItem = project.AddTask(
                 taskItemLine.Title.ToString(),
                 taskItemLine.Description.ToString(),
                 userId,

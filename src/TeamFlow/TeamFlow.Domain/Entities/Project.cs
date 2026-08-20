@@ -88,9 +88,10 @@ public sealed class Project : Entity
         string description,
         Guid? assignedUserId,
         DateTimeOffset? dueDate,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        TaskItemStatus status = TaskItemStatus.Todo)
     {
-        var task = TaskItem.Create(Id, title, description, assignedUserId, dueDate, now);
+        var task = TaskItem.Create(Id, title, description, assignedUserId, dueDate, now, status);
         _tasks.Add(task);
         return task;
     }

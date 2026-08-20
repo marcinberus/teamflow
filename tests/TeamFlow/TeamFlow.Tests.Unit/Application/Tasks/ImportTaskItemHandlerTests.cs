@@ -26,13 +26,14 @@ public sealed class ImportTaskItemHandlerTests
     [Fact]
     public async Task Handle_ShouldAddImportedTasksWithProjectMemberAssigneesAndParsedStatuses()
     {
-        var projectId = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
         var cancellationToken = new CancellationTokenSource().Token;
+        var firstAssignedUserId = Guid.NewGuid();
+        var project = ConfigureAccessibleProject(userId, cancellationToken, firstAssignedUserId);
+        var projectId = project.Id;
         using var stream = new MemoryStream();
         var command = new ImportTaskItemCommand(projectId, stream, ".csv");
-        var firstAssignedUserId = Guid.NewGuid();
         var taskItemLines = new[]
         {
             new TaskItemLine("Design API".AsMemory(), "Define endpoints".AsMemory(), firstAssignedUserId.ToString().AsMemory(), "2027-05-20T10:00:00+00:00".AsMemory(), "InProgress".AsMemory()),
@@ -40,7 +41,6 @@ public sealed class ImportTaskItemHandlerTests
         };
         var handler = CreateHandler();
 
-        ConfigureAccessibleProject(projectId, userId, cancellationToken, firstAssignedUserId);
         _dateTimeProvider.UtcNow.Returns(now);
         ConfigureImport(stream, cancellationToken, taskItemLines);
 
@@ -49,7 +49,7 @@ public sealed class ImportTaskItemHandlerTests
         result.IsSuccess.Should().BeTrue();
         await _taskItemRepository.Received(1).AddAsync(
             Arg.Is<TaskItem>(taskItem =>
-                taskItem.ProjectId == projectId
+                taskItem.ProjectId == project.Id
                 && taskItem.Title == taskItemLines[0].Title.ToString()
                 && taskItem.Description == taskItemLines[0].Description.ToString()
                 && taskItem.Status == TaskItemStatus.InProgress
@@ -59,7 +59,7 @@ public sealed class ImportTaskItemHandlerTests
             cancellationToken);
         await _taskItemRepository.Received(1).AddAsync(
             Arg.Is<TaskItem>(taskItem =>
-                taskItem.ProjectId == projectId
+                taskItem.ProjectId == project.Id
                 && taskItem.Title == taskItemLines[1].Title.ToString()
                 && taskItem.Description == taskItemLines[1].Description.ToString()
                 && taskItem.Status == TaskItemStatus.Done
@@ -67,6 +67,7 @@ public sealed class ImportTaskItemHandlerTests
                 && taskItem.DueDate == DateTimeOffset.Parse(taskItemLines[1].DueDate.ToString())
                 && taskItem.CreatedAt == now),
             cancellationToken);
+        project.Tasks.Should().HaveCount(2);
     }
 
     [Theory]
@@ -74,12 +75,11 @@ public sealed class ImportTaskItemHandlerTests
     [InlineData("99")]
     public async Task Handle_ShouldUseTodoStatus_WhenImportedStatusIsInvalidOrUndefined(string importedStatus)
     {
-        var projectId = Guid.NewGuid();
+        var project = ConfigureAccessibleProject(Guid.NewGuid(), CancellationToken.None);
         using var stream = new MemoryStream();
-        var command = new ImportTaskItemCommand(projectId, stream, ".csv");
+        var command = new ImportTaskItemCommand(project.Id, stream, ".csv");
         var handler = CreateHandler();
 
-        ConfigureAccessibleProject(projectId, Guid.NewGuid(), CancellationToken.None);
         ConfigureImport(
             stream,
             CancellationToken.None,
@@ -97,13 +97,12 @@ public sealed class ImportTaskItemHandlerTests
     [InlineData("2027-05-20T10:00:00+02:00", 120)]
     public async Task Handle_ShouldParseImportedDueDate(string importedDueDate, int offsetInMinutes)
     {
-        var projectId = Guid.NewGuid();
+        var project = ConfigureAccessibleProject(Guid.NewGuid(), CancellationToken.None);
         using var stream = new MemoryStream();
-        var command = new ImportTaskItemCommand(projectId, stream, ".csv");
+        var command = new ImportTaskItemCommand(project.Id, stream, ".csv");
         var expectedDueDate = new DateTimeOffset(2027, 5, 20, 10, 0, 0, TimeSpan.FromMinutes(offsetInMinutes));
         var handler = CreateHandler();
 
-        ConfigureAccessibleProject(projectId, Guid.NewGuid(), CancellationToken.None);
         ConfigureImport(
             stream,
             CancellationToken.None,
@@ -121,12 +120,11 @@ public sealed class ImportTaskItemHandlerTests
     [InlineData("not-a-date")]
     public async Task Handle_ShouldUseNullDueDate_WhenImportedDueDateCannotBeParsed(string importedDueDate)
     {
-        var projectId = Guid.NewGuid();
+        var project = ConfigureAccessibleProject(Guid.NewGuid(), CancellationToken.None);
         using var stream = new MemoryStream();
-        var command = new ImportTaskItemCommand(projectId, stream, ".csv");
+        var command = new ImportTaskItemCommand(project.Id, stream, ".csv");
         var handler = CreateHandler();
 
-        ConfigureAccessibleProject(projectId, Guid.NewGuid(), CancellationToken.None);
         ConfigureImport(
             stream,
             CancellationToken.None,
@@ -142,14 +140,13 @@ public sealed class ImportTaskItemHandlerTests
     [Fact]
     public async Task Handle_ShouldSaveChangesAndReturnImportedTaskIds()
     {
-        var projectId = Guid.NewGuid();
         var cancellationToken = new CancellationTokenSource().Token;
+        var project = ConfigureAccessibleProject(Guid.NewGuid(), cancellationToken);
         using var stream = new MemoryStream();
-        var command = new ImportTaskItemCommand(projectId, stream, ".csv");
+        var command = new ImportTaskItemCommand(project.Id, stream, ".csv");
         var importedTaskIds = new List<Guid>();
         var handler = CreateHandler();
 
-        ConfigureAccessibleProject(projectId, Guid.NewGuid(), cancellationToken);
         ConfigureImport(
             stream,
             cancellationToken,
@@ -173,12 +170,11 @@ public sealed class ImportTaskItemHandlerTests
     {
         var importedUserId = Guid.NewGuid();
         var currentUserId = Guid.NewGuid();
-        var projectId = Guid.NewGuid();
+        var project = ConfigureAccessibleProject(currentUserId, CancellationToken.None);
         using var stream = new MemoryStream();
-        var command = new ImportTaskItemCommand(projectId, stream, ".csv");
+        var command = new ImportTaskItemCommand(project.Id, stream, ".csv");
         var handler = CreateHandler();
 
-        ConfigureAccessibleProject(projectId, currentUserId, CancellationToken.None);
         ConfigureImport(
             stream,
             CancellationToken.None,
@@ -214,16 +210,15 @@ public sealed class ImportTaskItemHandlerTests
     [Fact]
     public async Task Handle_ShouldReturnForbiddenWithoutImporting_WhenCurrentUserIsNotProjectMember()
     {
-        var projectId = Guid.NewGuid();
         var currentUserId = Guid.NewGuid();
         var project = Project.Create("Apollo", "Landing mission", Guid.NewGuid(), DateTimeOffset.UtcNow);
         using var stream = new MemoryStream();
-        var command = new ImportTaskItemCommand(projectId, stream, ".csv");
+        var command = new ImportTaskItemCommand(project.Id, stream, ".csv");
         var handler = CreateHandler();
 
         _currentUserService.UserId.Returns(currentUserId);
         _projectRepository
-            .GetByIdWithMembersAsync(projectId, CancellationToken.None)
+            .GetByIdWithMembersAsync(project.Id, CancellationToken.None)
             .Returns(project);
 
         var result = await handler.Handle(command, CancellationToken.None);
@@ -253,8 +248,7 @@ public sealed class ImportTaskItemHandlerTests
             Arg.Any<CancellationToken>());
     }
 
-    private void ConfigureAccessibleProject(
-        Guid projectId,
+    private Project ConfigureAccessibleProject(
         Guid currentUserId,
         CancellationToken cancellationToken,
         params Guid[] memberIds)
@@ -269,8 +263,10 @@ public sealed class ImportTaskItemHandlerTests
 
         _currentUserService.UserId.Returns(currentUserId);
         _projectRepository
-            .GetByIdWithMembersAsync(projectId, cancellationToken)
+            .GetByIdWithMembersAsync(project.Id, cancellationToken)
             .Returns(project);
+
+        return project;
     }
 
     private void AssertImportWasNotStarted()
