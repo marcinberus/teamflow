@@ -96,6 +96,7 @@ public sealed class ProjectReadService(ISqlConnectionFactory connectionFactory) 
         int page,
         int pageSize,
         string? status,
+        string? search,
         CancellationToken cancellationToken)
     {
         const string sql = """
@@ -111,17 +112,24 @@ public sealed class ProjectReadService(ISqlConnectionFactory connectionFactory) 
             FROM Projects p
             INNER JOIN Users u ON u.Id = p.OwnerId
             WHERE (@Status IS NULL OR p.Status = @Status)
+              AND (@Search IS NULL
+                   OR CHARINDEX(@Search, p.Name) > 0
+                   OR CHARINDEX(@Search, p.Description) > 0)
             ORDER BY p.CreatedAt DESC, p.Id
             OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
 
             SELECT COUNT(*)
             FROM Projects p
-            WHERE (@Status IS NULL OR p.Status = @Status);
+            WHERE (@Status IS NULL OR p.Status = @Status)
+              AND (@Search IS NULL
+                   OR CHARINDEX(@Search, p.Name) > 0
+                   OR CHARINDEX(@Search, p.Description) > 0);
             """;
 
         var parameters = new
         {
             Status = string.IsNullOrWhiteSpace(status) ? null : status,
+            Search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
             Offset = (page - 1) * pageSize,
             PageSize = pageSize
         };

@@ -17,6 +17,7 @@ public sealed class ListProjectsQueryHandler(
             request.Page,
             request.PageSize,
             request.Status,
+            request.Search,
             cancellationToken);
 
         logger.LogInformation(

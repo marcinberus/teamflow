@@ -37,7 +37,7 @@ public sealed class ProjectReadServiceTests : IntegrationTestBase
         dbContext.Projects.Add(project);
         await dbContext.SaveChangesAsync();
 
-        var (items, totalCount) = await readService.ListProjectsAsync(1, 100, "OnHold", CancellationToken.None);
+        var (items, totalCount) = await readService.ListProjectsAsync(1, 100, "OnHold", null, CancellationToken.None);
         var result = items.Single(item => item.Id == project.Id);
 
         totalCount.Should().BeGreaterThanOrEqualTo(1);
@@ -64,13 +64,43 @@ public sealed class ProjectReadServiceTests : IntegrationTestBase
         dbContext.Projects.AddRange(oldestProject, middleProject, newestProject);
         await dbContext.SaveChangesAsync();
 
-        var (firstPage, totalCount) = await readService.ListProjectsAsync(1, 2, "Active", CancellationToken.None);
-        var (secondPage, secondPageTotalCount) = await readService.ListProjectsAsync(2, 2, "Active", CancellationToken.None);
+        var (firstPage, totalCount) = await readService.ListProjectsAsync(1, 2, "Active", null, CancellationToken.None);
+        var (secondPage, secondPageTotalCount) = await readService.ListProjectsAsync(2, 2, "Active", null, CancellationToken.None);
 
         totalCount.Should().Be(3);
         secondPageTotalCount.Should().Be(totalCount);
         firstPage.Select(project => project.Id).Should().Equal(newestProject.Id, middleProject.Id);
         secondPage.Select(project => project.Id).Should().Equal(oldestProject.Id);
+    }
+
+    [Fact]
+    public async Task ListProjects_ShouldSearchBeforeFilteringAndPagination()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var owner = User.Create("project-search-owner@example.com", "hash", "Alice", "Smith", Role.Manager, now);
+        var newestMatch = Project.Create("Customer portal", "First match", owner.Id, now);
+        var olderMatch = Project.Create("Internal tools", "Customer reporting", owner.Id, now.AddMinutes(-1));
+        var statusMismatch = Project.Create("Customer archive", "Wrong status", owner.Id, now.AddMinutes(-2));
+        var textMismatch = Project.Create("Marketing site", "Wrong text", owner.Id, now.AddMinutes(-3));
+        statusMismatch.ChangeStatus(ProjectStatus.OnHold, now);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<TeamFlowDbContext>();
+        var readService = scope.ServiceProvider.GetRequiredService<IProjectReadService>();
+
+        dbContext.Users.Add(owner);
+        dbContext.Projects.AddRange(newestMatch, olderMatch, statusMismatch, textMismatch);
+        await dbContext.SaveChangesAsync();
+
+        var (firstPage, totalCount) = await readService.ListProjectsAsync(
+            1, 1, "Active", " customer ", CancellationToken.None);
+        var (secondPage, secondPageTotalCount) = await readService.ListProjectsAsync(
+            2, 1, "Active", "customer", CancellationToken.None);
+
+        totalCount.Should().Be(2);
+        secondPageTotalCount.Should().Be(totalCount);
+        firstPage.Select(project => project.Id).Should().Equal(newestMatch.Id);
+        secondPage.Select(project => project.Id).Should().Equal(olderMatch.Id);
     }
 
     [Fact]

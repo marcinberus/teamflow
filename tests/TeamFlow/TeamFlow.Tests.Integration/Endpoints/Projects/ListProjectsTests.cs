@@ -62,6 +62,24 @@ public sealed class ListProjectsTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
+    [Fact]
+    public async Task ListProjects_ShouldFilterBySearch()
+    {
+        var token = await RegisterAndLoginAsync("list-projects-search@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        await CreateProjectAsync("Searchable customer portal");
+        await CreateProjectAsync("Unrelated internal tool");
+
+        var response = await _client.GetAsync($"{Paths.Projects}?search=customer");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ListProjectsResult>();
+        result.Should().NotBeNull();
+        result!.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle().Which.Name.Should().Be("Searchable customer portal");
+    }
+
     private async Task CreateProjectAsync(string name)
     {
         var response = await _client.PostAsJsonAsync(Paths.Projects, new CreateProjectCommand(name, "Description"));

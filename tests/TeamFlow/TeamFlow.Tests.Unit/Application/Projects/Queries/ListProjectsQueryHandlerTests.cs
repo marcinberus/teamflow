@@ -24,14 +24,14 @@ public sealed class ListProjectsQueryHandlerTests
             DateTimeOffset.UtcNow);
         IReadOnlyList<ProjectSummaryDto> items = [item];
 
-        readService.ListProjectsAsync(2, 10, "Active", Arg.Any<CancellationToken>())
+        readService.ListProjectsAsync(2, 10, "Active", "mission", Arg.Any<CancellationToken>())
             .Returns((items, 15));
 
         var handler = new ListProjectsQueryHandler(
             readService,
             Substitute.For<ILogger<ListProjectsQueryHandler>>());
 
-        var result = await handler.Handle(new ListProjectsQuery(2, 10, "Active"), CancellationToken.None);
+        var result = await handler.Handle(new ListProjectsQuery(2, 10, "Active", "mission"), CancellationToken.None);
 
         result.Items.Should().ContainSingle().Which.Should().Be(item);
         result.TotalCount.Should().Be(15);
