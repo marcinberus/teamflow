@@ -13,6 +13,7 @@ internal static class ApiErrorMessages
             [ErrorMessages.EmailAlreadyExists] = (StatusCodes.Status409Conflict, ConflictTitle)
         };
 
+    internal const string ImportValidationFailedTitle = "Import validation failed";
     internal const string ValidationFailedTitle = "Validation failed";
     internal const string ValidationFailedDetail = "One or more validation errors occurred.";
     internal const string NotFoundTitle = "Not found";

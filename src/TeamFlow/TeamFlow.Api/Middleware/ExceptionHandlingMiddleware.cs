@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using System.Diagnostics;
+using System.Text.Json;
+using TeamFlow.Importing.Common;
 using TeamFlow.Domain.Exceptions;
 
 namespace TeamFlow.Api.Middleware;
@@ -42,6 +44,29 @@ public static class ExceptionHandlingExtensions
 
                 switch (exception)
                 {
+                    case FormatException formatException when context.Request.Path.Value?.EndsWith("/import", StringComparison.OrdinalIgnoreCase) == true:
+                        logger.Warning(formatException, "Import validation failed");
+
+                        await WriteProblemAsync(
+                            context,
+                            StatusCodes.Status422UnprocessableEntity,
+                            ApiErrorMessages.ImportValidationFailedTitle,
+                            formatException.Message);
+
+                        return;
+
+                    case JsonException jsonException when context.Request.Path.Value?.EndsWith("/import", StringComparison.OrdinalIgnoreCase) == true:
+                        logger.Warning(jsonException, "JSON import validation failed");
+                        var importException = ImportExceptions.CreateInvalidJsonException(jsonException);
+
+                        await WriteProblemAsync(
+                            context,
+                            StatusCodes.Status422UnprocessableEntity,
+                            ApiErrorMessages.ImportValidationFailedTitle,
+                            importException.Message);
+
+                        return;
+
                     case ValidationException validationException:
                         var validationErrors = validationException.Errors.ToArray();
                         logger.Warning("Request validation failed with {ValidationErrorCount} error(s) for {InvalidProperties}",

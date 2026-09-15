@@ -146,6 +146,16 @@ public sealed class TasksController(IMediator mediator) : ControllerBase
 
         var result = await mediator.Send(command, cancellationToken);
 
+        if (!result.IsSuccess)
+        {
+            var failure = ApiErrorMessages.GetFailureMapping(result.Error);
+
+            return Problem(
+                statusCode: failure.StatusCode,
+                title: failure.Title,
+                detail: result.Error);
+        }
+
         return CreatedAtAction(nameof(List),
             new { },
             result.Value);

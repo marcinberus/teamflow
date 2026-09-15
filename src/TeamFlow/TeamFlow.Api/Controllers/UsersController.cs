@@ -7,6 +7,7 @@ using TeamFlow.Application.Users.Commands.RegisterUser;
 using TeamFlow.Application.Users.Commands.UpdateProfile;
 using TeamFlow.Application.Users.DTOs;
 using TeamFlow.Application.Users.Queries.GetMyProfile;
+using TeamFlow.Application.Users.Queries.ListUsers;
 
 namespace TeamFlow.Api.Controllers;
 
@@ -20,6 +21,18 @@ public sealed class UsersController : ControllerBase
     public UsersController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    [HttpGet]
+    [Authorize]
+    [ProducesResponseType(typeof(ListUsersResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult<ListUsersResult>> List(
+        [FromQuery] ListUsersQuery query,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await _mediator.Send(query, cancellationToken));
     }
 
     [HttpPost]

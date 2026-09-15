@@ -19,7 +19,6 @@
 
 ## Architecture
 
-
 ```
 TeamFlow.Domain          ← entities, enums, domain exceptions
 TeamFlow.Application     ← commands, queries, validators, interfaces
@@ -113,11 +112,12 @@ All routes are versioned under `/api/v1/`.
 |--------|-------|------|-------------|
 | `POST` | `/api/v1/users` | — | Register a new user, returns JWT |
 | `POST` | `/api/v1/login` | — | Authenticate an existing user, returns JWT |
+| `GET` | `/api/v1/users?search=alice&page=1&pageSize=20` | ✓ | Search users for member assignment |
 | `GET` | `/api/v1/users/me` | ✓ | Get current user profile |
 | `PUT` | `/api/v1/users/me` | ✓ | Update current user's first and last name |
 | `POST` | `/api/v1/projects` | ✓ | Create a project; caller becomes its owner |
 | `POST` | `/api/v1/projects/import` | ✓ | Import projects from a CSV or JSON file sent as `multipart/form-data` |
-| `GET` | `/api/v1/projects?page=1&pageSize=20&status=Active` | ✓ | List projects with pagination and an optional status filter |
+| `GET` | `/api/v1/projects?page=1&pageSize=20&status=Active&search=portal` | ✓ | List projects with pagination and optional status and text filters |
 | `GET` | `/api/v1/projects/{projectId}` | ✓ | Get full project details |
 | `PUT` | `/api/v1/projects/{projectId}` | ✓ | Update a project's name and description (owner or admin) |
 | `PATCH` | `/api/v1/projects/{projectId}/status` | ✓ | Change a project's status (owner or admin) |
@@ -126,11 +126,27 @@ All routes are versioned under `/api/v1/`.
 | `GET` | `/api/v1/projects/{projectId}/members` | ✓ | List assigned project members |
 | `DELETE` | `/api/v1/projects/{projectId}/members/{userId}` | ✓ | Remove a project member (owner, manager, or admin); the project owner cannot be removed |
 | `POST` | `/api/v1/projects/{projectId}/tasks` | ✓ | Create a task; caller and optional assignee must belong to the project |
-| `POST` | `/api/v1/projects/{projectId}/tasks/import` | ✓ | Import tasks from a CSV of JSON file sent as `multipart/form-data` |
+| `POST` | `/api/v1/projects/{projectId}/tasks/import` | ✓ | Import tasks from a CSV or JSON file sent as `multipart/form-data` |
 | `GET` | `/api/v1/projects/{projectId}/statistics` | ✓ | Get task totals by status, assigned-member count, and a two-decimal completion percentage string |
 | `GET` | `/api/v1/projects/{projectId}/tasks?status=InProgress&assignedUserId={userId}&page=1&pageSize=20` | ✓ | List project tasks with pagination and optional status and assignee filters |
 | `PUT` | `/api/v1/projects/{projectId}/tasks/{taskId}` | ✓ | Update a task; caller and optional assignee must belong to the project |
 | `PATCH` | `/api/v1/projects/{projectId}/tasks/{taskId}/status` | ✓ | Change a task's status; caller must belong to the project |
+
+## Import formats
+
+Project JSON imports use a top-level array:
+
+```json
+[
+  {
+    "name": "Website Redesign",
+    "description": "Modernize the company website."
+  }
+]
+```
+
+CSV import errors and malformed JSON return HTTP 422 with an `errors` array
+containing `line`, `code`, and `message` fields.
 
 ## Running tests
 

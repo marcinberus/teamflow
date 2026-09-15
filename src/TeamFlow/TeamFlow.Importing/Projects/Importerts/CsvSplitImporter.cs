@@ -65,7 +65,6 @@ public class CsvSplitImporter : IProjectImporter
 
     private static FormatException CreateInvalidRowException(int lineNumber)
     {
-        return new FormatException(
-            $"Invalid CSV row at line {lineNumber}.");
+        return ImportExceptions.CreateInvalidRowException(FileExtension.Csv.ToString(), lineNumber);
     }
 }

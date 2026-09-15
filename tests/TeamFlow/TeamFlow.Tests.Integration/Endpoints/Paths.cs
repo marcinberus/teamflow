@@ -11,6 +11,8 @@ internal class Paths
 
     public static string ProjectTasks(Guid projectId) => $"{Projects}/{projectId}/tasks";
 
+    public static string ProjectTaskImport(Guid projectId) => $"{ProjectTasks(projectId)}/import";
+
     public static string ProjectStatistics(Guid projectId) =>
         $"{Projects}/{projectId}/statistics";
 

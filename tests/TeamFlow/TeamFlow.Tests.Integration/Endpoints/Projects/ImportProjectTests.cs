@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using TeamFlow.Application.Projects.Commands.ImportProject;
@@ -58,6 +59,59 @@ public sealed class ImportProjectTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task ImportProject_ShouldReturn201_WhenJsonArrayIsValid()
+    {
+        var registration = await RegisterAndLoginAsync("import-project-json@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", registration.Token);
+        const string json = """
+            [
+              { "name": "Website Redesign", "description": "Refresh the public site." },
+              { "name": "Customer Portal", "description": "Create a self-service portal." }
+            ]
+            """;
+        using var content = CreateImportContent("projects.json", json, "application/json");
+
+        var response = await _client.PostAsync(Paths.ProjectImport, content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var result = await response.Content.ReadFromJsonAsync<ImportProjectResult>();
+        result.Should().NotBeNull();
+        result!.ProjectIds.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task ImportProject_ShouldReturn422ProblemDetails_WhenCsvRowIsInvalid()
+    {
+        var registration = await RegisterAndLoginAsync("import-project-invalid-csv@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", registration.Token);
+        using var content = CreateImportContent(
+            "projects.csv",
+            "\"Valid\",\"Row\"\r\nInvalid");
+
+        var response = await _client.PostAsync(Paths.ProjectImport, content);
+
+        await AssertImportErrorAsync(response, "Invalid Csv row at line 2.");
+    }
+
+    [Fact]
+    public async Task ImportProject_ShouldReturn422ProblemDetails_WhenJsonIsMalformed()
+    {
+        var registration = await RegisterAndLoginAsync("import-project-invalid-json@example.com");
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", registration.Token);
+        const string json = """
+            [
+              { "name": "Valid", "description": "Row" },
+              invalid
+            ]
+            """;
+        using var content = CreateImportContent("projects.json", json, "application/json");
+
+        var response = await _client.PostAsync(Paths.ProjectImport, content);
+
+        await AssertImportErrorAsync(response, "Invalid JSON content at line 3.");
+    }
+
+    [Fact]
     public async Task ImportProject_ShouldReturn422_WhenFileExtensionIsUnsupported()
     {
         var registration = await RegisterAndLoginAsync("import-project-extension@example.com");
@@ -79,16 +133,29 @@ public sealed class ImportProjectTests : IntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    private static MultipartFormDataContent CreateImportContent(string fileName, string csv)
+    private static MultipartFormDataContent CreateImportContent(
+        string fileName,
+        string contents,
+        string mediaType = "text/csv")
     {
         var content = new MultipartFormDataContent();
-        var fileContent = new ByteArrayContent(Encoding.UTF8.GetBytes(csv));
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
+        var fileContent = new ByteArrayContent(Encoding.UTF8.GetBytes(contents));
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
         content.Add(fileContent, "file", fileName);
 
         return content;
     }
 
+    private static async Task AssertImportErrorAsync(
+        HttpResponseMessage response,
+        string expectedDetail)
+    {
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        problem.RootElement.GetProperty("title").GetString().Should().Be("Import validation failed");
+        problem.RootElement.GetProperty("detail").GetString().Should().Be(expectedDetail);
+        problem.RootElement.TryGetProperty("errors", out _).Should().BeFalse();
+    }
     private async Task<RegisterUserResult> RegisterAndLoginAsync(
         string email,
         string password = "P@ssw0rd!")
