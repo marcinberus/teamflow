@@ -48,6 +48,62 @@ body {
   margin: 0;
 }
 
+a {
+  color: inherit;
+}
+
+.auth-page {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 2rem);
+}
+
+.auth-card {
+  width: min(100%, 30rem);
+}
+
+.auth-card mat-card-header {
+  padding-bottom: 1rem;
+}
+
+.auth-card mat-card-actions {
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+  margin: 0;
+  font: var(--mat-sys-headline-medium);
+}
+
+.page-header p {
+  max-width: 48rem;
+  margin: 0.5rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.page-panel {
+  min-height: 12rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid var(--app-border-color);
+  border-radius: var(--mat-sys-corner-medium);
+  background: var(--mat-sys-surface);
+}
+
+.page-panel h2 {
+  margin-top: 0;
+  font: var(--mat-sys-title-large);
+}
+
+.page-panel p {
+  color: var(--mat-sys-on-surface-variant);
+}
+
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid var(--mat-sys-primary);
   outline-offset: 2px;
