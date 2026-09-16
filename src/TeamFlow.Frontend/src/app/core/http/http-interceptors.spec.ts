@@ -9,6 +9,7 @@ import { TestBed } from '@angular/core/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { authInterceptor } from '../auth/auth.interceptor';
+import { AuthStore } from '../auth/auth.store';
 import { TokenStorage } from '../auth/token-storage';
 import { errorInterceptor } from './error.interceptor';
 
@@ -22,6 +23,7 @@ describe('HTTP interceptors', () => {
     url: '/projects',
     navigate: vi.fn(() => Promise.resolve(true)),
   };
+  const authStore = { clearInvalidSession: vi.fn() };
   const snackBar = { open: vi.fn() };
 
   let http: HttpClient;
@@ -37,6 +39,7 @@ describe('HTTP interceptors', () => {
         provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
         provideHttpClientTesting(),
         { provide: TokenStorage, useValue: tokenStorage },
+        { provide: AuthStore, useValue: authStore },
         { provide: Router, useValue: router },
         { provide: MatSnackBar, useValue: snackBar },
       ],
@@ -70,7 +73,7 @@ describe('HTTP interceptors', () => {
       .expectOne('/api/v1/projects')
       .flush({}, { status: 401, statusText: 'Unauthorized' });
 
-    expect(tokenStorage.clear).toHaveBeenCalledOnce();
+    expect(authStore.clearInvalidSession).toHaveBeenCalledOnce();
     expect(router.navigate).toHaveBeenCalledWith(['/login'], {
       queryParams: { returnUrl: '/projects' },
     });
@@ -91,7 +94,7 @@ describe('HTTP interceptors', () => {
       );
 
     expect(receivedError?.status).toBe(422);
-    expect(tokenStorage.clear).not.toHaveBeenCalled();
+    expect(authStore.clearInvalidSession).not.toHaveBeenCalled();
     expect(router.navigate).not.toHaveBeenCalled();
     expect(snackBar.open).not.toHaveBeenCalled();
   });
@@ -105,7 +108,7 @@ describe('HTTP interceptors', () => {
 
     httpTesting.expectOne('/api/v1/login').flush({}, { status: 401, statusText: 'Unauthorized' });
 
-    expect(tokenStorage.clear).toHaveBeenCalledOnce();
+    expect(authStore.clearInvalidSession).toHaveBeenCalledOnce();
     expect(router.navigate).not.toHaveBeenCalled();
     expect(receivedStatus).toBe(401);
   });

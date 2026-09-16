@@ -94,6 +94,14 @@ mat-toolbar {
   flex: 1;
 }
 
+.account-name {
+  overflow: hidden;
+  max-width: 16rem;
+  margin-right: 0.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .shell-content {
   width: min(100%, 90rem);
   margin-inline: auto;
@@ -103,5 +111,11 @@ mat-toolbar {
 @media (min-width: 48rem) {
   .toolbar-title {
     margin-left: 0;
+  }
+}
+
+@media (max-width: 35rem) {
+  .account-name {
+    display: none;
   }
 }

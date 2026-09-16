@@ -7,8 +7,9 @@ import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
+import { AuthStore } from '../../core/auth/auth.store';
 
 const SMALL_SCREEN = '(max-width: 47.99rem)';
 
@@ -30,6 +31,8 @@ const SMALL_SCREEN = '(max-width: 47.99rem)';
 })
 export class AppShell {
   private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly router = inject(Router);
+  protected readonly auth = inject(AuthStore);
 
   protected readonly isSmallScreen = toSignal(
     this.breakpointObserver.observe(SMALL_SCREEN).pipe(map(({ matches }) => matches)),
@@ -40,5 +43,10 @@ export class AppShell {
     if (this.isSmallScreen()) {
       void navigation.close();
     }
+  }
+
+  protected logout(): void {
+    this.auth.logout();
+    void this.router.navigate(['/login']);
   }
 }

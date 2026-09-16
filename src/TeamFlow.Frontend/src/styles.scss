@@ -63,13 +63,86 @@ a {
   width: min(100%, 30rem);
 }
 
+.auth-card--wide {
+  width: min(100%, 42rem);
+}
+
 .auth-card mat-card-header {
   padding-bottom: 1rem;
 }
 
 .auth-card mat-card-actions {
+  padding: 0 1rem 1rem;
+}
+
+.auth-card mat-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.25rem;
+  padding-top: 1rem;
+}
+
+.auth-form mat-form-field {
+  width: 100%;
+}
+
+.auth-form-row {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-alert,
+.form-error-summary {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mat-sys-error);
+  border-radius: var(--mat-sys-corner-small);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+.form-error-summary p,
+.form-error-summary ul {
+  margin-block: 0;
+}
+
+.form-error-summary ul {
+  padding-left: 1.25rem;
+}
+
+.submit-button {
+  width: 100%;
+}
+
+.button-content {
+  display: inline-flex;
+  align-items: center;
   gap: 0.5rem;
-  padding: 1rem;
+}
+
+.auth-switch {
+  margin: 0;
+  padding: 0 1rem 1.25rem;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: center;
+}
+
+.auth-switch a {
+  color: var(--mat-sys-primary);
+  font-weight: 600;
+}
+
+.security-note {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
 }
 
 .page-header {
@@ -107,4 +180,11 @@ a {
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid var(--mat-sys-primary);
   outline-offset: 2px;
+}
+
+@media (max-width: 35rem) {
+  .auth-form-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
 }
