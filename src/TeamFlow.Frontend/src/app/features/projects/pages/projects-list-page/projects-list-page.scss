@@ -1,0 +1,96 @@
+﻿:host {
+  display: block;
+}
+
+.projects-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.projects-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.projects-filters mat-form-field {
+  width: min(100%, 24rem);
+}
+
+.projects-panel {
+  overflow: hidden;
+  min-height: 12rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: var(--mat-sys-corner-medium);
+  background: var(--mat-sys-surface);
+}
+
+.projects-table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 52rem;
+}
+
+td a {
+  color: var(--mat-sys-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+td a:hover {
+  text-decoration: underline;
+}
+
+.status {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.projects-state {
+  display: grid;
+  min-height: 12rem;
+  place-content: center;
+  justify-items: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.projects-state h2,
+.projects-state p {
+  margin: 0;
+}
+
+.projects-state p {
+  margin-top: 0.5rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.projects-state button {
+  margin-top: 1rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 35rem) {
+  .projects-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .projects-header > button {
+    align-self: start;
+  }
+}

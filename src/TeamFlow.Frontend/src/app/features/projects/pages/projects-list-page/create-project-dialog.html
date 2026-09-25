@@ -1,0 +1,43 @@
+﻿<h2 mat-dialog-title>New project</h2>
+<form [formGroup]="form" novalidate (ngSubmit)="submit()">
+  <mat-dialog-content>
+    @if (formError()) {
+      <div class="form-alert" role="alert">{{ formError() }}</div>
+    }
+    @if (summaryErrors().length) {
+      <div class="form-error-summary" role="alert">
+        <p>Check the following:</p>
+        <ul>
+          @for (message of summaryErrors(); track $index) {
+            <li>{{ message }}</li>
+          }
+        </ul>
+      </div>
+    }
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name" maxlength="200" cdkFocusInitial />
+      @if (name.invalid && (name.dirty || name.touched)) {
+        <mat-error>{{ nameError() }}</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="5" maxlength="2000"></textarea>
+      <mat-hint align="end">{{ form.controls.description.value.length }}/2000</mat-hint>
+      @if (description.invalid && (description.dirty || description.touched)) {
+        <mat-error>{{ descriptionError() }}</mat-error>
+      }
+    </mat-form-field>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [disabled]="isSubmitting()" (click)="close()">Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="isSubmitting()">
+      @if (isSubmitting()) {
+        <span class="button-content"><mat-spinner [diameter]="18" /> Creating…</span>
+      } @else {
+        Create project
+      }
+    </button>
+  </mat-dialog-actions>
+</form>
