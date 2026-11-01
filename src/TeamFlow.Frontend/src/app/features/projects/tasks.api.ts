@@ -2,7 +2,15 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../core/config/api.config';
-import { ListTasksParams, TaskListResponse } from './projects.models';
+import {
+  ChangeTaskStatusRequest,
+  CreateTaskRequest,
+  CreateTaskResponse,
+  ListTasksParams,
+  TaskListResponse,
+  TaskStatus,
+  UpdateTaskRequest,
+} from './projects.models';
 
 @Injectable({ providedIn: 'root' })
 export class TasksApi {
@@ -22,5 +30,24 @@ export class TasksApi {
     return this.http.get<TaskListResponse>(`${API_BASE_URL}/projects/${projectId}/tasks`, {
       params,
     });
+  }
+
+  createTask(projectId: string, request: CreateTaskRequest): Observable<CreateTaskResponse> {
+    return this.http.post<CreateTaskResponse>(
+      `${API_BASE_URL}/projects/${projectId}/tasks`,
+      request,
+    );
+  }
+
+  updateTask(projectId: string, taskId: string, request: UpdateTaskRequest): Observable<void> {
+    return this.http.put<void>(`${API_BASE_URL}/projects/${projectId}/tasks/${taskId}`, request);
+  }
+
+  changeStatus(projectId: string, taskId: string, status: TaskStatus): Observable<void> {
+    const request: ChangeTaskStatusRequest = { status };
+    return this.http.patch<void>(
+      `${API_BASE_URL}/projects/${projectId}/tasks/${taskId}/status`,
+      request,
+    );
   }
 }

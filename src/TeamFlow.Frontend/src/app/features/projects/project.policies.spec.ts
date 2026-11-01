@@ -1,4 +1,9 @@
-import { assigneeOptions, canManageMembers, canManageProject } from './project.policies';
+import {
+  assigneeOptions,
+  canManageMembers,
+  canManageProject,
+  isProjectMember,
+} from './project.policies';
 import { ProjectMember } from './projects.models';
 
 const member = (userId: string, firstName: string): ProjectMember => ({
@@ -32,6 +37,17 @@ describe('canManageMembers', () => {
     expect(canManageMembers(project, { id: 'x', role: 'Admin' })).toBe(true);
     expect(canManageMembers(project, { id: 'x', role: 'Developer' })).toBe(false);
     expect(canManageMembers(project, null)).toBe(false);
+  });
+});
+
+describe('isProjectMember', () => {
+  const project = { ownerId: 'o' };
+
+  it('allows the owner and members, but not an unrelated Admin or anonymous', () => {
+    expect(isProjectMember(project, [], { id: 'o' })).toBe(true);
+    expect(isProjectMember(project, [member('a', 'Ann')], { id: 'a' })).toBe(true);
+    expect(isProjectMember(project, [member('a', 'Ann')], { id: 'x' })).toBe(false);
+    expect(isProjectMember(project, [], null)).toBe(false);
   });
 });
 

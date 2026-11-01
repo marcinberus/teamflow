@@ -19,6 +19,15 @@ export function canManageMembers(
   );
 }
 
+/** Task mutations: owner or a member. A global Admin does NOT bypass this. */
+export function isProjectMember(
+  project: Pick<ProjectDetails, 'ownerId'>,
+  members: readonly Pick<ProjectMember, 'userId'>[],
+  user: Pick<UserProfile, 'id'> | null,
+): boolean {
+  return !!user && (user.id === project.ownerId || members.some((m) => m.userId === user.id));
+}
+
 export interface AssigneeOption {
   userId: string;
   name: string;

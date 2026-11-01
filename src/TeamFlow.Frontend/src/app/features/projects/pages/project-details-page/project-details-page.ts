@@ -4,16 +4,24 @@ import { Component, DestroyRef, WritableSignal, computed, inject, signal } from 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Observable, finalize } from 'rxjs';
+import { Observable, Subscription, finalize } from 'rxjs';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { ProjectFormDialog } from '../../project-form-dialog';
 import { ProjectMembersApi } from '../../project-members.api';
-import { canManageMembers, canManageProject } from '../../project.policies';
+import {
+  assigneeOptions,
+  canManageMembers,
+  canManageProject,
+  isProjectMember,
+} from '../../project.policies';
 import { ProjectsApi } from '../../projects.api';
 import {
   PROJECT_STATUSES,
@@ -22,12 +30,15 @@ import {
   ProjectStatistics,
   ProjectStatus,
   TASK_STATUSES,
+  TaskItem,
   TaskListResponse,
+  TaskStatus,
 } from '../../projects.models';
 import { TasksApi } from '../../tasks.api';
 import { AssignMemberDialog, AssignMemberDialogData } from './assign-member-dialog';
 import { DeleteProjectDialog } from './delete-project-dialog';
 import { RemoveMemberDialog, RemoveMemberDialogData } from './remove-member-dialog';
+import { TaskFormDialog, TaskFormDialogData } from './task-form-dialog';
 
 type Section<T> =
   { state: 'loading' } | { state: 'error'; notFound: boolean } | { state: 'loaded'; data: T };
@@ -40,8 +51,11 @@ const loading = { state: 'loading' } as const;
     DatePipe,
     MatButtonModule,
     MatDialogModule,
+    MatFormFieldModule,
     MatMenuModule,
+    MatPaginatorModule,
     MatProgressBarModule,
+    MatSelectModule,
     MatSnackBarModule,
     MatTableModule,
     RouterLink,
@@ -80,10 +94,36 @@ export class ProjectDetailsPage {
     const columns = ['name', 'email', 'role', 'projectRole', 'joined'];
     return this.canManageTeam() ? [...columns, 'actions'] : columns;
   });
-  protected readonly taskColumns = ['title', 'status', 'assignee', 'dueDate', 'created'];
+  protected readonly canEditTasks = computed(() => {
+    const project = this.project();
+    const members = this.members();
+    return (
+      project.state === 'loaded' &&
+      members.state === 'loaded' &&
+      isProjectMember(project.data, members.data, this.auth.profile())
+    );
+  });
+  protected readonly assignees = computed(() => {
+    const project = this.project();
+    const members = this.members();
+    return project.state === 'loaded' && members.state === 'loaded'
+      ? assigneeOptions(project.data, members.data)
+      : [];
+  });
+  protected readonly taskColumns = computed(() => {
+    const columns = ['title', 'status', 'assignee', 'dueDate', 'created'];
+    return this.canEditTasks() ? [...columns, 'actions'] : columns;
+  });
 
-  // tasks show the first page only; filters and pagination arrive with the tasks PR.
-  private readonly taskPage = { page: 1, pageSize: 20 };
+  protected readonly taskStatusFilter = signal<TaskStatus | null>(null);
+  protected readonly taskAssigneeFilter = signal<string | null>(null);
+  protected readonly taskPage = signal(1);
+  protected readonly taskPageSize = signal(20);
+  protected readonly changingTaskId = signal<string | null>(null);
+  protected readonly hasTaskFilters = computed(
+    () => !!this.taskStatusFilter() || !!this.taskAssigneeFilter(),
+  );
+  private taskRequest?: Subscription;
 
   constructor() {
     this.loadProject();
@@ -157,8 +197,101 @@ export class ProjectDetailsPage {
     this.loadStatistics(true);
   }
 
-  protected loadTasks(): void {
-    this.load(this.tasks, this.tasksApi.listTasks(this.projectId, this.taskPage), (tasks) => tasks);
+  /** A newer request supersedes an in-flight one, so a slow stale response cannot overwrite it. */
+  protected loadTasks(silent = false): void {
+    this.taskRequest?.unsubscribe();
+    this.taskRequest = this.load(
+      this.tasks,
+      this.tasksApi.listTasks(this.projectId, {
+        status: this.taskStatusFilter(),
+        assignedUserId: this.taskAssigneeFilter(),
+        page: this.taskPage(),
+        pageSize: this.taskPageSize(),
+      }),
+      (tasks) => tasks,
+      silent,
+    );
+  }
+
+  protected setTaskStatusFilter(status: TaskStatus | null): void {
+    this.taskStatusFilter.set(status);
+    this.taskPage.set(1);
+    this.loadTasks();
+  }
+
+  protected setTaskAssigneeFilter(userId: string | null): void {
+    this.taskAssigneeFilter.set(userId);
+    this.taskPage.set(1);
+    this.loadTasks();
+  }
+
+  protected clearTaskFilters(): void {
+    this.taskStatusFilter.set(null);
+    this.taskAssigneeFilter.set(null);
+    this.taskPage.set(1);
+    this.loadTasks();
+  }
+
+  protected changeTaskPage({ pageIndex, pageSize }: PageEvent): void {
+    this.taskPage.set(pageSize === this.taskPageSize() ? pageIndex + 1 : 1);
+    this.taskPageSize.set(pageSize);
+    this.loadTasks();
+  }
+
+  protected openTaskForm(task?: TaskItem): void {
+    const data: TaskFormDialogData = {
+      projectId: this.projectId,
+      assignees: this.assignees(),
+      task,
+    };
+
+    this.dialog
+      .open(TaskFormDialog, { autoFocus: 'first-tabbable', width: '34rem', data })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((saved: boolean | undefined) => {
+        if (!saved) return;
+        this.snackBar.open(task ? 'Task updated.' : 'Task created.', 'Dismiss', {
+          duration: 4000,
+        });
+        this.refreshTasks();
+      });
+  }
+
+  protected changeTaskStatus(task: TaskItem, status: TaskStatus): void {
+    if (status === task.status || this.changingTaskId()) return;
+
+    this.changingTaskId.set(task.id);
+    this.tasksApi
+      .changeStatus(this.projectId, task.id, status)
+      .pipe(
+        finalize(() => this.changingTaskId.set(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Task status changed.', 'Dismiss', { duration: 4000 });
+          this.refreshTasks();
+        },
+        error: (error: unknown) => {
+          const code = error instanceof HttpErrorResponse ? error.status : 0;
+          this.snackBar.open(
+            code === 403
+              ? 'You must be a member of this project to change its tasks.'
+              : code === 404
+                ? 'This task no longer exists.'
+                : 'The status could not be changed. Please try again.',
+            'Dismiss',
+            { duration: 6000 },
+          );
+        },
+      });
+  }
+
+  /** Tasks and statistics only; the rest of the page is untouched. */
+  private refreshTasks(): void {
+    this.loadTasks(true);
+    this.loadStatistics(true);
   }
 
   /** "OnHold" -> "On hold", "InProgress" -> "In progress". */
@@ -229,9 +362,9 @@ export class ProjectDetailsPage {
     request: Observable<R>,
     map: (response: R) => T,
     silent = false,
-  ): void {
+  ): Subscription {
     if (!silent) target.set(loading);
-    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    return request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => target.set({ state: 'loaded', data: map(response) }),
       error: (error: unknown) => {
         if (silent) return;

@@ -98,7 +98,39 @@
     </section>
 
     <section class="section" aria-labelledby="tasks-title">
-      <h2 id="tasks-title">Tasks</h2>
+      <div class="section-header">
+        <h2 id="tasks-title">Tasks</h2>
+        @if (canEditTasks()) {
+          <button mat-stroked-button type="button" (click)="openTaskForm()">New task</button>
+        }
+      </div>
+      <div class="task-filters">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Status</mat-label>
+          <mat-select
+            [value]="taskStatusFilter()"
+            (selectionChange)="setTaskStatusFilter($event.value)"
+          >
+            <mat-option [value]="null">All</mat-option>
+            @for (s of taskStatuses; track s) {
+              <mat-option [value]="s">{{ label(s) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Assignee</mat-label>
+          <mat-select
+            [value]="taskAssigneeFilter()"
+            [disabled]="members().state !== 'loaded'"
+            (selectionChange)="setTaskAssigneeFilter($event.value)"
+          >
+            <mat-option [value]="null">Anyone</mat-option>
+            @for (a of assignees(); track a.userId) {
+              <mat-option [value]="a.userId">{{ a.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
       @let taskSection = tasks();
       @switch (taskSection.state) {
         @case ('loading') {
@@ -112,7 +144,17 @@
         }
         @case ('loaded') {
           @if (taskSection.data.items.length === 0) {
-            <div class="state"><p>No tasks yet.</p></div>
+            <div class="state">
+              @if (hasTaskFilters()) {
+                <p>No tasks match these filters.</p>
+                <button mat-button type="button" (click)="clearTaskFilters()">Clear filters</button>
+              } @else {
+                <p>No tasks yet.</p>
+                @if (canEditTasks()) {
+                  <button mat-button type="button" (click)="openTaskForm()">New task</button>
+                }
+              }
+            </div>
           } @else {
             <div class="table-scroll">
               <table mat-table [dataSource]="taskSection.data.items">
@@ -138,19 +180,58 @@
                   <th mat-header-cell *matHeaderCellDef>Created</th>
                   <td mat-cell *matCellDef="let t">{{ t.createdAt | date: 'mediumDate' }}</td>
                 </ng-container>
-                <tr mat-header-row *matHeaderRowDef="taskColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: taskColumns"></tr>
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let t">
+                    <button
+                      mat-button
+                      type="button"
+                      [attr.aria-label]="'Edit ' + t.title"
+                      (click)="openTaskForm(t)"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      mat-button
+                      type="button"
+                      [attr.aria-label]="'Change status of ' + t.title"
+                      [matMenuTriggerFor]="taskStatusMenu"
+                      [matMenuTriggerData]="{ task: t }"
+                      [disabled]="changingTaskId() !== null"
+                    >
+                      {{ changingTaskId() === t.id ? 'Changing…' : 'Status' }}
+                    </button>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="taskColumns()"></tr>
+                <tr mat-row *matRowDef="let row; columns: taskColumns()"></tr>
               </table>
             </div>
-            @if (taskSection.data.totalCount > taskSection.data.items.length) {
-              <p class="note">
-                Showing {{ taskSection.data.items.length }} of {{ taskSection.data.totalCount }}
-                tasks.
-              </p>
-            }
+            <mat-paginator
+              [length]="taskSection.data.totalCount"
+              [pageIndex]="taskPage() - 1"
+              [pageSize]="taskPageSize()"
+              [pageSizeOptions]="[10, 20, 50, 100]"
+              aria-label="Task pages"
+              (page)="changeTaskPage($event)"
+            />
           }
         }
       }
+      <mat-menu #taskStatusMenu="matMenu">
+        <ng-template matMenuContent let-task="task">
+          @for (s of taskStatuses; track s) {
+            <button
+              mat-menu-item
+              type="button"
+              [disabled]="s === task.status"
+              (click)="changeTaskStatus(task, s)"
+            >
+              {{ label(s) }}
+            </button>
+          }
+        </ng-template>
+      </mat-menu>
     </section>
 
     <section class="section" aria-labelledby="members-title">

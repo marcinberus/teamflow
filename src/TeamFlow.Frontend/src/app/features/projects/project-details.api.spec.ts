@@ -34,6 +34,24 @@ describe('project details data access', () => {
     }
   });
 
+  it('creates, updates and changes task status with the documented requests', () => {
+    const tasks = TestBed.inject(TasksApi);
+    const body = { title: 'T', description: '', assignedUserId: null, dueDate: null };
+    tasks.createTask('p1', body).subscribe();
+    tasks.updateTask('p1', 't1', body).subscribe();
+    tasks.changeStatus('p1', 't1', 'Done').subscribe();
+
+    const create = httpTesting.expectOne('/api/v1/projects/p1/tasks');
+    expect(create.request.method).toBe('POST');
+    expect(create.request.body).toEqual(body);
+    const update = httpTesting.expectOne('/api/v1/projects/p1/tasks/t1');
+    expect(update.request.method).toBe('PUT');
+    expect(update.request.body).toEqual(body);
+    const status = httpTesting.expectOne('/api/v1/projects/p1/tasks/t1/status');
+    expect(status.request.method).toBe('PATCH');
+    expect(status.request.body).toEqual({ status: 'Done' });
+  });
+
   it('assigns, removes and searches users with the documented requests', () => {
     const members = TestBed.inject(ProjectMembersApi);
     members.assignMember('p1', { userId: 'u1', projectRole: 'Developer' }).subscribe();

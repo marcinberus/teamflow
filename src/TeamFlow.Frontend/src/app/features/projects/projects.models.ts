@@ -123,6 +123,25 @@ export interface TaskItem {
   createdAt: string;
 }
 
+// create: a null assignee means "the current user" (backend substitutes it)
+export interface CreateTaskRequest {
+  title: string;
+  description: string;
+  assignedUserId: string | null;
+  dueDate: string | null;
+}
+
+export interface CreateTaskResponse {
+  taskId: string;
+}
+
+// update: a null assignee is persisted as "unassigned"
+export type UpdateTaskRequest = CreateTaskRequest;
+
+export interface ChangeTaskStatusRequest {
+  status: TaskStatus;
+}
+
 export interface TaskListResponse {
   items: TaskItem[];
   totalCount: number;
