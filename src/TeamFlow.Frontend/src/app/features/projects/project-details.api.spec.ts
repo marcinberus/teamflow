@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ProjectMembersApi } from './project-members.api';
 import { ProjectsApi } from './projects.api';
 import { TasksApi } from './tasks.api';
+import { UsersApi } from './users.api';
 
 describe('project details data access', () => {
   let httpTesting: HttpTestingController;
@@ -31,5 +32,20 @@ describe('project details data access', () => {
     ]) {
       expect(httpTesting.expectOne(url).request.method).toBe('GET');
     }
+  });
+
+  it('assigns, removes and searches users with the documented requests', () => {
+    const members = TestBed.inject(ProjectMembersApi);
+    members.assignMember('p1', { userId: 'u1', projectRole: 'Developer' }).subscribe();
+    members.removeMember('p1', 'u1').subscribe();
+    TestBed.inject(UsersApi).searchUsers('ann').subscribe();
+
+    const assign = httpTesting.expectOne('/api/v1/projects/p1/members');
+    expect(assign.request.method).toBe('POST');
+    expect(assign.request.body).toEqual({ userId: 'u1', projectRole: 'Developer' });
+    expect(httpTesting.expectOne('/api/v1/projects/p1/members/u1').request.method).toBe('DELETE');
+    expect(
+      httpTesting.expectOne('/api/v1/users?page=1&pageSize=20&search=ann').request.method,
+    ).toBe('GET');
   });
 });

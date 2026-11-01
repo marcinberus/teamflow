@@ -9,6 +9,16 @@ export function canManageProject(
   return !!user && (user.id === project.ownerId || user.role === 'Admin');
 }
 
+/** Assign/remove members: project owner or global Manager/Admin (never `projectRole`). */
+export function canManageMembers(
+  project: Pick<ProjectDetails, 'ownerId'>,
+  user: Pick<UserProfile, 'id' | 'role'> | null,
+): boolean {
+  return (
+    !!user && (user.id === project.ownerId || user.role === 'Admin' || user.role === 'Manager')
+  );
+}
+
 export interface AssigneeOption {
   userId: string;
   name: string;

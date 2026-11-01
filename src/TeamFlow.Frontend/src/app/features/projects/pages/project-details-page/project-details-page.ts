@@ -13,7 +13,7 @@ import { Observable, finalize } from 'rxjs';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { ProjectFormDialog } from '../../project-form-dialog';
 import { ProjectMembersApi } from '../../project-members.api';
-import { canManageProject } from '../../project.policies';
+import { canManageMembers, canManageProject } from '../../project.policies';
 import { ProjectsApi } from '../../projects.api';
 import {
   PROJECT_STATUSES,
@@ -25,7 +25,9 @@ import {
   TaskListResponse,
 } from '../../projects.models';
 import { TasksApi } from '../../tasks.api';
+import { AssignMemberDialog, AssignMemberDialogData } from './assign-member-dialog';
 import { DeleteProjectDialog } from './delete-project-dialog';
+import { RemoveMemberDialog, RemoveMemberDialogData } from './remove-member-dialog';
 
 type Section<T> =
   { state: 'loading' } | { state: 'error'; notFound: boolean } | { state: 'loaded'; data: T };
@@ -67,10 +69,17 @@ export class ProjectDetailsPage {
     const section = this.project();
     return section.state === 'loaded' && canManageProject(section.data, this.auth.profile());
   });
+  protected readonly canManageTeam = computed(() => {
+    const section = this.project();
+    return section.state === 'loaded' && canManageMembers(section.data, this.auth.profile());
+  });
   protected readonly isChangingStatus = signal(false);
   protected readonly projectStatuses = PROJECT_STATUSES;
   protected readonly taskStatuses = TASK_STATUSES;
-  protected readonly memberColumns = ['name', 'email', 'role', 'projectRole', 'joined'];
+  protected readonly memberColumns = computed(() => {
+    const columns = ['name', 'email', 'role', 'projectRole', 'joined'];
+    return this.canManageTeam() ? [...columns, 'actions'] : columns;
+  });
   protected readonly taskColumns = ['title', 'status', 'assignee', 'dueDate', 'created'];
 
   // tasks show the first page only; filters and pagination arrive with the tasks PR.
@@ -87,12 +96,65 @@ export class ProjectDetailsPage {
     this.load(this.project, this.projectsApi.getProject(this.projectId), (p) => p, silent);
   }
 
-  protected loadStatistics(): void {
-    this.load(this.statistics, this.projectsApi.getStatistics(this.projectId), (stats) => stats);
+  protected loadStatistics(silent = false): void {
+    this.load(
+      this.statistics,
+      this.projectsApi.getStatistics(this.projectId),
+      (stats) => stats,
+      silent,
+    );
   }
 
-  protected loadMembers(): void {
-    this.load(this.members, this.membersApi.listMembers(this.projectId), ({ items }) => items);
+  protected loadMembers(silent = false): void {
+    this.load(
+      this.members,
+      this.membersApi.listMembers(this.projectId),
+      ({ items }) => items,
+      silent,
+    );
+  }
+
+  protected addMember(project: ProjectDetails): void {
+    const section = this.members();
+    const data: AssignMemberDialogData = {
+      projectId: project.id,
+      excludedUserIds: [
+        project.ownerId,
+        ...(section.state === 'loaded' ? section.data.map((m) => m.userId) : []),
+      ],
+    };
+
+    this.dialog
+      .open(AssignMemberDialog, { autoFocus: 'first-tabbable', width: '34rem', data })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((added: boolean | undefined) => {
+        if (!added) return;
+        this.snackBar.open('Member added.', 'Dismiss', { duration: 4000 });
+        this.refreshMembership();
+      });
+  }
+
+  protected removeMember(member: ProjectMember): void {
+    const data: RemoveMemberDialogData = { projectId: this.projectId, member };
+
+    this.dialog
+      .open(RemoveMemberDialog, { data })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((removed: boolean | undefined) => {
+        if (!removed) return;
+        this.snackBar.open(`${member.firstName} ${member.lastName} removed.`, 'Dismiss', {
+          duration: 4000,
+        });
+        this.refreshMembership();
+      });
+  }
+
+  /** Members and statistics only; the rest of the page is untouched. */
+  private refreshMembership(): void {
+    this.loadMembers(true);
+    this.loadStatistics(true);
   }
 
   protected loadTasks(): void {

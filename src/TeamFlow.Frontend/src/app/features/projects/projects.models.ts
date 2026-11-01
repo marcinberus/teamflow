@@ -85,6 +85,26 @@ export interface ProjectMemberListResponse {
   items: ProjectMember[];
 }
 
+export interface AssignProjectMemberRequest {
+  userId: string;
+  projectRole: UserRole;
+}
+
+export interface UserSummary {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+}
+
+export interface UserListResponse {
+  items: UserSummary[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface ListTasksParams {
   status?: TaskStatus | null;
   assignedUserId?: string | null;
