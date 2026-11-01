@@ -26,7 +26,7 @@ import {
 } from 'rxjs/operators';
 import { ProjectsApi } from '../../projects.api';
 import { PROJECT_STATUSES, ProjectStatus, ProjectSummary } from '../../projects.models';
-import { CreateProjectDialog } from './create-project-dialog';
+import { ProjectFormDialog } from '../../project-form-dialog';
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -126,7 +126,7 @@ export class ProjectsListPage {
 
   protected openCreateDialog(): void {
     this.dialog
-      .open(CreateProjectDialog, { autoFocus: 'first-tabbable', width: '34rem' })
+      .open(ProjectFormDialog, { autoFocus: 'first-tabbable', width: '34rem' })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((projectId: string | undefined) => {

@@ -27,7 +27,33 @@
           {{ p.createdAt | date: 'mediumDate' }}
         </p>
       </div>
-      <a mat-stroked-button [routerLink]="['/projects', p.id, 'import-tasks']">Import tasks</a>
+      <div class="header-actions">
+        <a mat-stroked-button [routerLink]="['/projects', p.id, 'import-tasks']">Import tasks</a>
+        @if (canManage()) {
+          <button mat-stroked-button type="button" (click)="edit(p)">Edit</button>
+          <button
+            mat-stroked-button
+            type="button"
+            [matMenuTriggerFor]="statusMenu"
+            [disabled]="isChangingStatus()"
+          >
+            {{ isChangingStatus() ? 'Changing…' : 'Change status' }}
+          </button>
+          <mat-menu #statusMenu="matMenu">
+            @for (s of projectStatuses; track s) {
+              <button
+                mat-menu-item
+                type="button"
+                [disabled]="s === p.status"
+                (click)="changeStatus(p, s)"
+              >
+                {{ label(s) }}
+              </button>
+            }
+          </mat-menu>
+          <button mat-stroked-button type="button" (click)="confirmDelete(p)">Delete</button>
+        }
+      </div>
     </header>
     @if (p.description) {
       <p class="description">{{ p.description }}</p>

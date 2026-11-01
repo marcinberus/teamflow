@@ -1,4 +1,13 @@
+import { UserProfile } from '../../core/auth/auth.models';
 import { ProjectDetails, ProjectMember } from './projects.models';
+
+/** Edit, change status, delete: project owner or global Admin. */
+export function canManageProject(
+  project: Pick<ProjectDetails, 'ownerId'>,
+  user: Pick<UserProfile, 'id' | 'role'> | null,
+): boolean {
+  return !!user && (user.id === project.ownerId || user.role === 'Admin');
+}
 
 export interface AssigneeOption {
   userId: string;

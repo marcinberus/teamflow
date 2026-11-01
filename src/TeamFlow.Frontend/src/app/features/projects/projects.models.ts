@@ -38,6 +38,12 @@ export interface CreateProjectResponse {
   projectId: string;
 }
 
+export type UpdateProjectRequest = CreateProjectRequest;
+
+export interface ChangeProjectStatusRequest {
+  status: ProjectStatus;
+}
+
 export interface ProjectDetails {
   id: string;
   name: string;

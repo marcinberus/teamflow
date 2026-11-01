@@ -1,4 +1,4 @@
-﻿<h2 mat-dialog-title>New project</h2>
+﻿<h2 mat-dialog-title>{{ project ? 'Edit project' : 'New project' }}</h2>
 <form [formGroup]="form" novalidate (ngSubmit)="submit()">
   <mat-dialog-content>
     @if (formError()) {
@@ -34,9 +34,11 @@
     <button mat-button type="button" [disabled]="isSubmitting()" (click)="close()">Cancel</button>
     <button mat-flat-button type="submit" [disabled]="isSubmitting()">
       @if (isSubmitting()) {
-        <span class="button-content"><mat-spinner [diameter]="18" /> Creating…</span>
+        <span class="button-content"
+          ><mat-spinner [diameter]="18" /> {{ project ? 'Saving…' : 'Creating…' }}</span
+        >
       } @else {
-        Create project
+        {{ project ? 'Save' : 'Create project' }}
       }
     </button>
   </mat-dialog-actions>
