@@ -46,7 +46,7 @@ describe('App', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-shell')).toBeTruthy();
-    expect(compiled.textContent).toContain('Project workspace');
+    expect(compiled.textContent).toContain('Browse and manage your team’s work.');
   });
 
   it('redirects an anonymous workspace navigation to login', async () => {

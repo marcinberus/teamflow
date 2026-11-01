@@ -6,7 +6,9 @@ import {
   CreateProjectRequest,
   CreateProjectResponse,
   ListProjectsParams,
+  ProjectDetails,
   ProjectListResponse,
+  ProjectStatistics,
 } from './projects.models';
 
 @Injectable({ providedIn: 'root' })
@@ -31,5 +33,13 @@ export class ProjectsApi {
 
   createProject(request: CreateProjectRequest): Observable<CreateProjectResponse> {
     return this.http.post<CreateProjectResponse>(`${API_BASE_URL}/projects`, request);
+  }
+
+  getProject(projectId: string): Observable<ProjectDetails> {
+    return this.http.get<ProjectDetails>(`${API_BASE_URL}/projects/${projectId}`);
+  }
+
+  getStatistics(projectId: string): Observable<ProjectStatistics> {
+    return this.http.get<ProjectStatistics>(`${API_BASE_URL}/projects/${projectId}/statistics`);
   }
 }
