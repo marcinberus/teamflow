@@ -1,29 +1,35 @@
 # TeamFlow
 
-.NET 9 ASP.NET Core Web API for managing projects, teams, users, tasks, progress tracking, and project statistics.
+Application for managing projects, teams, users, tasks, progress tracking, and project statistics:
+a .NET 9 ASP.NET Core Web API and an Angular 22 single-page frontend.
 
 ## Tech stack
 
 - **ASP.NET Core 9** — Web API
 - **EF Core 9** — write side (repositories, Unit of Work)
 - **Dapper** — read-side SQL projections
-- **SQL Server ** — database
+- **SQL Server** — database
 - **MediatR** — CQRS (commands and queries)
 - **FluentValidation** — input validation via pipeline behavior
 - **JWT Bearer** — authentication
 - **BCrypt** — password hashing
 - **Swagger / OpenAPI**
 - **xUnit + FluentAssertions + NSubstitute** — unit and integration tests
-- **Grafana + Loki** - logs
-- **Testcontainers (SQL Server)** — integration tests of repositories with real database
+- **Testcontainers (SQL Server) + Respawn** — integration tests against a real database
+- **Serilog + Grafana + Loki** — structured logs
+- **Angular 22 + Angular Material** — frontend SPA, tested with Vitest
 
 ## Architecture
 
 ```
-TeamFlow.Domain          ← entities, enums, domain exceptions
-TeamFlow.Application     ← commands, queries, validators, interfaces
-TeamFlow.Infrastructure  ← EF Core, JWT, BCrypt, repositories
-TeamFlow.Api             ← controllers, middleware, DI composition root
+src/TeamFlow/
+  TeamFlow.Domain          ← entities, enums, domain exceptions
+  TeamFlow.Application     ← commands, queries, validators, interfaces
+  TeamFlow.Importing       ← CSV/JSON importers for projects and tasks
+  TeamFlow.Infrastructure  ← EF Core, Dapper read services, JWT, BCrypt, repositories
+  TeamFlow.Api             ← controllers, middleware, DI composition root
+  TeamFlow.Benchmarks      ← BenchmarkDotNet benchmarks for the CSV importer
+src/TeamFlow.Frontend      ← Angular SPA, see its README
 ```
 
 ## Local development
@@ -82,6 +88,18 @@ Open Grafana at `http://localhost:3000` (sign in with `admin` / `admin`), then *
 - service_name="teamflow-api",
 - environment="Docker"
 
+## Frontend
+
+With the API running at `https://localhost:7025`:
+
+```ps1
+cd src/TeamFlow.Frontend
+npm install
+npm start
+```
+
+Open `http://localhost:4200`. See [src/TeamFlow.Frontend/README.md](src/TeamFlow.Frontend/README.md) for details.
+
 ## Swagger UI
 
 Swagger UI is available in **Development** mode at:
@@ -110,7 +128,7 @@ All routes are versioned under `/api/v1/`.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| `POST` | `/api/v1/users` | — | Register a new user, returns JWT |
+| `POST` | `/api/v1/users` | — | Register a new user with a caller-chosen global role, returns JWT |
 | `POST` | `/api/v1/login` | — | Authenticate an existing user, returns JWT |
 | `GET` | `/api/v1/users?search=alice&page=1&pageSize=20` | ✓ | Search users for member assignment |
 | `GET` | `/api/v1/users/me` | ✓ | Get current user profile |
@@ -118,7 +136,7 @@ All routes are versioned under `/api/v1/`.
 | `POST` | `/api/v1/projects` | ✓ | Create a project; caller becomes its owner |
 | `POST` | `/api/v1/projects/import` | ✓ | Import projects from a CSV or JSON file sent as `multipart/form-data` |
 | `GET` | `/api/v1/projects?page=1&pageSize=20&status=Active&search=portal` | ✓ | List projects with pagination and optional status and text filters |
-| `GET` | `/api/v1/projects/{projectId}` | ✓ | Get full project details |
+| `GET` | `/api/v1/projects/{projectId}` | ✓ | Get project details (members, tasks and statistics have their own endpoints) |
 | `PUT` | `/api/v1/projects/{projectId}` | ✓ | Update a project's name and description (owner or admin) |
 | `PATCH` | `/api/v1/projects/{projectId}/status` | ✓ | Change a project's status (owner or admin) |
 | `DELETE` | `/api/v1/projects/{projectId}` | ✓ | Permanently delete a project (owner or admin) |
@@ -134,7 +152,15 @@ All routes are versioned under `/api/v1/`.
 
 ## Import formats
 
-Project JSON imports use a top-level array:
+Both import endpoints accept a `.csv` or `.json` file in the `multipart/form-data` field `file`.
+
+**Projects.** CSV has no header row; each row has exactly two quoted fields, and fields cannot contain quote characters:
+
+```csv
+"Website Redesign","Modernize the company website."
+```
+
+JSON is a top-level array (property names are case-insensitive):
 
 ```json
 [
@@ -145,8 +171,18 @@ Project JSON imports use a top-level array:
 ]
 ```
 
-CSV import errors and malformed JSON return HTTP 422 with an `errors` array
-containing `line`, `code`, and `message` fields.
+**Tasks.** CSV has no header row; each row has exactly five quoted fields:
+
+```csv
+"Build project dashboard","Create the dashboard.","ee86f9c8-153d-4820-860c-7386a302fa52","2026-12-19T14:30:00+02:00","InProgress"
+```
+
+JSON is a top-level array of objects with `title`, `description`, `userId`, `dueDate` and `status`.
+Some values are normalized instead of rejected: an unknown status becomes `Todo`, a user who is not
+a project member becomes the importing user, and an invalid due date becomes empty.
+
+**Errors.** A malformed CSV row or malformed JSON returns `422` Problem Details with the first
+failure in `detail` (e.g. `"Invalid CSV row at line 4."`). There is no per-row error list.
 
 ## Running tests
 
@@ -160,6 +196,13 @@ dotnet test tests/TeamFlow/TeamFlow.Tests.Integration
 
 Integration tests share one Testcontainers SQL Server instance, run sequentially, and reset database data before each test.
 
+Frontend tests (not run in CI, which covers the backend only):
+
+```ps1
+cd src/TeamFlow.Frontend
+npm test -- --watch=false
+```
+
 ## Running benchmarks
 
 Run the CSV importer benchmark in Release mode:
@@ -169,3 +212,8 @@ dotnet run -c Release --project src/TeamFlow/TeamFlow.Benchmarks
 ```
 
 The benchmark compares three CSV importer implementations: `string.Split()`, `ReadOnlySpan<char>`, and `ReadOnlyMemory<char>`, including execution time and memory allocations.
+
+## Known limitations
+
+- Public registration accepts any global role, including `Admin`. This is intentional for demo use only; production needs a server-assigned default role and a separate role-management workflow.
+- The project list is global, not scoped to the current user.
