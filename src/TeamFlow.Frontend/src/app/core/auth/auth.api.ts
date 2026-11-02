@@ -7,6 +7,7 @@ import {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  UpdateProfileRequest,
   UserProfile,
 } from './auth.models';
 
@@ -24,5 +25,9 @@ export class AuthApi {
 
   getProfile(): Observable<UserProfile> {
     return this.http.get<UserProfile>(`${API_BASE_URL}/users/me`);
+  }
+
+  updateProfile(request: UpdateProfileRequest): Observable<void> {
+    return this.http.put<void>(`${API_BASE_URL}/users/me`, request);
   }
 }

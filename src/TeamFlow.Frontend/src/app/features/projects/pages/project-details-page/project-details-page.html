@@ -254,7 +254,12 @@
         }
         @case ('loaded') {
           @if (memberSection.data.length === 0) {
-            <div class="state"><p>No members yet.</p></div>
+            <div class="state">
+              <p>No members yet.</p>
+              @if (canManageTeam()) {
+                <button mat-button type="button" (click)="addMember(p)">Add member</button>
+              }
+            </div>
           } @else {
             <div class="table-scroll">
               <table mat-table [dataSource]="memberSection.data">

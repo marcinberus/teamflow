@@ -19,6 +19,7 @@ describe('AuthStore', () => {
     login: vi.fn(),
     register: vi.fn(),
     getProfile: vi.fn(),
+    updateProfile: vi.fn(),
   };
   const tokenStorage = {
     get: vi.fn<() => string | null>(() => null),
@@ -76,6 +77,19 @@ describe('AuthStore', () => {
     expect(tokenStorage.clear).toHaveBeenCalledOnce();
     expect(store.token()).toBeNull();
     expect(store.profile()).toBeNull();
+  });
+
+  it('updates the local profile (and display name) after a saved name change', async () => {
+    tokenStorage.get.mockReturnValue('persisted-token');
+    api.updateProfile.mockReturnValue(of(undefined));
+    const store = TestBed.inject(AuthStore);
+    await firstValueFrom(store.bootstrap());
+
+    await firstValueFrom(store.updateProfile({ firstName: 'Ola', lastName: 'Nowak' }));
+
+    expect(api.updateProfile).toHaveBeenCalledWith({ firstName: 'Ola', lastName: 'Nowak' });
+    expect(store.displayName()).toBe('Ola Nowak');
+    expect(store.profile()?.email).toBe('anna@example.com');
   });
 
   it('removes all local session state on logout', async () => {

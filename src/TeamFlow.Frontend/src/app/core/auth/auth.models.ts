@@ -26,6 +26,11 @@ export interface RegisterResponse {
   userId: string;
 }
 
+export interface UpdateProfileRequest {
+  firstName: string;
+  lastName: string;
+}
+
 export interface UserProfile {
   id: string;
   email: string;

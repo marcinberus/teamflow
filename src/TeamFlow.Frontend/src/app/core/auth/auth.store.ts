@@ -12,7 +12,7 @@ import {
   throwError,
 } from 'rxjs';
 import { AuthApi } from './auth.api';
-import { LoginRequest, RegisterRequest, UserProfile } from './auth.models';
+import { LoginRequest, RegisterRequest, UpdateProfileRequest, UserProfile } from './auth.models';
 import { TokenStorage } from './token-storage';
 
 @Injectable({ providedIn: 'root' })
@@ -77,6 +77,16 @@ export class AuthStore {
     );
 
     return this.bootstrapRequest;
+  }
+
+  updateProfile(request: UpdateProfileRequest): Observable<void> {
+    return this.api
+      .updateProfile(request)
+      .pipe(
+        tap(() =>
+          this.profileState.update((profile) => (profile ? { ...profile, ...request } : profile)),
+        ),
+      );
   }
 
   logout(): void {
