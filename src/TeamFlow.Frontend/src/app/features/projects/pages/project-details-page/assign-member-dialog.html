@@ -1,0 +1,58 @@
+<h2 mat-dialog-title>Add member</h2>
+<form [formGroup]="form" novalidate (ngSubmit)="submit()">
+  <mat-dialog-content>
+    @if (formError()) {
+      <div class="form-alert" role="alert">{{ formError() }}</div>
+    }
+    <mat-form-field appearance="outline">
+      <mat-label>User</mat-label>
+      <input
+        matInput
+        formControlName="user"
+        [matAutocomplete]="auto"
+        placeholder="Search by name or email"
+        cdkFocusInitial
+      />
+      <mat-autocomplete #auto="matAutocomplete" [displayWith]="display">
+        @for (user of options(); track user.id) {
+          <mat-option [value]="user">
+            {{ user.firstName }} {{ user.lastName }} · {{ user.email }}
+          </mat-option>
+        } @empty {
+          @if (!isSearching()) {
+            <mat-option disabled>No users found</mat-option>
+          }
+        }
+      </mat-autocomplete>
+      @if (isSearching()) {
+        <mat-spinner matSuffix [diameter]="18" />
+      }
+      @if (searchFailed()) {
+        <mat-hint>Search failed. Keep typing to try again.</mat-hint>
+      }
+      @if (form.controls.user.invalid && form.controls.user.touched) {
+        <mat-error>Select a user from the list.</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Project role</mat-label>
+      <mat-select formControlName="projectRole">
+        @for (role of roles; track role) {
+          <mat-option [value]="role">{{ role }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [disabled]="isSubmitting()" (click)="dialogRef.close()">
+      Cancel
+    </button>
+    <button mat-flat-button type="submit" [disabled]="isSubmitting()">
+      @if (isSubmitting()) {
+        <mat-spinner [diameter]="18" /> Adding…
+      } @else {
+        Add member
+      }
+    </button>
+  </mat-dialog-actions>
+</form>

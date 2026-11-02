@@ -1,0 +1,64 @@
+<header class="page-header">
+  <h1>Profile</h1>
+  <p>Your account details.</p>
+</header>
+
+@if (auth.profile(); as profile) {
+  <section class="page-panel" aria-labelledby="account-title">
+    <h2 id="account-title">Account</h2>
+    <dl class="account">
+      <div>
+        <dt>Email</dt>
+        <dd>{{ profile.email }}</dd>
+      </div>
+      <div>
+        <dt>Role</dt>
+        <dd>{{ profile.role }}</dd>
+      </div>
+      <div>
+        <dt>Member since</dt>
+        <dd>{{ profile.createdAt | date: 'mediumDate' }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="page-panel" aria-labelledby="name-title">
+    <h2 id="name-title">Name</h2>
+    <form [formGroup]="form" novalidate (ngSubmit)="submit()">
+      @if (formError()) {
+        <div class="form-alert" role="alert">{{ formError() }}</div>
+      }
+      @if (summaryErrors().length) {
+        <div class="form-error-summary" role="alert">
+          <p>Check the following:</p>
+          <ul>
+            @for (message of summaryErrors(); track $index) {
+              <li>{{ message }}</li>
+            }
+          </ul>
+        </div>
+      }
+      <mat-form-field appearance="outline">
+        <mat-label>First name</mat-label>
+        <input matInput formControlName="firstName" maxlength="100" autocomplete="given-name" />
+        @if (form.controls.firstName.invalid && form.controls.firstName.touched) {
+          <mat-error>{{ error('firstName', 'First name') }}</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Last name</mat-label>
+        <input matInput formControlName="lastName" maxlength="100" autocomplete="family-name" />
+        @if (form.controls.lastName.invalid && form.controls.lastName.touched) {
+          <mat-error>{{ error('lastName', 'Last name') }}</mat-error>
+        }
+      </mat-form-field>
+      <button mat-flat-button type="submit" [disabled]="isSubmitting()">
+        @if (isSubmitting()) {
+          <mat-spinner [diameter]="18" /> Saving…
+        } @else {
+          Save
+        }
+      </button>
+    </form>
+  </section>
+}

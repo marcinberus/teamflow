@@ -36,72 +36,7 @@ const localDate = (date: Date) => date.toLocaleDateString('sv');
     MatSelectModule,
     ReactiveFormsModule,
   ],
-  template: `
-    <h2 mat-dialog-title>{{ task ? 'Edit task' : 'New task' }}</h2>
-    <form [formGroup]="form" novalidate (ngSubmit)="submit()">
-      <mat-dialog-content>
-        @if (formError()) {
-          <div class="form-alert" role="alert">{{ formError() }}</div>
-        }
-        @if (summaryErrors().length) {
-          <div class="form-error-summary" role="alert">
-            <p>Check the following:</p>
-            <ul>
-              @for (message of summaryErrors(); track $index) {
-                <li>{{ message }}</li>
-              }
-            </ul>
-          </div>
-        }
-        <mat-form-field appearance="outline">
-          <mat-label>Title</mat-label>
-          <input matInput formControlName="title" maxlength="300" cdkFocusInitial />
-          @if (form.controls.title.invalid && form.controls.title.touched) {
-            <mat-error>{{ error(form.controls.title, 'Title') }}</mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="4" maxlength="2000"></textarea>
-          <mat-hint align="end">{{ form.controls.description.value.length }}/2000</mat-hint>
-          @if (form.controls.description.invalid && form.controls.description.touched) {
-            <mat-error>{{ error(form.controls.description, 'Description') }}</mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Assignee</mat-label>
-          <mat-select formControlName="assignedUserId">
-            <mat-option [value]="null">{{ task ? 'Unassigned' : 'Me (default)' }}</mat-option>
-            @for (assignee of data.assignees; track assignee.userId) {
-              <mat-option [value]="assignee.userId">{{ assignee.name }}</mat-option>
-            }
-          </mat-select>
-          @if (form.controls.assignedUserId.invalid) {
-            <mat-error>{{ error(form.controls.assignedUserId, 'Assignee') }}</mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Due date</mat-label>
-          <input matInput type="date" formControlName="dueDate" />
-          @if (form.controls.dueDate.invalid && form.controls.dueDate.touched) {
-            <mat-error>{{ error(form.controls.dueDate, 'Due date') }}</mat-error>
-          }
-        </mat-form-field>
-      </mat-dialog-content>
-      <mat-dialog-actions align="end">
-        <button mat-button type="button" [disabled]="isSubmitting()" (click)="dialogRef.close()">
-          Cancel
-        </button>
-        <button mat-flat-button type="submit" [disabled]="isSubmitting()">
-          @if (isSubmitting()) {
-            <mat-spinner [diameter]="18" /> Saving…
-          } @else {
-            {{ task ? 'Save' : 'Create task' }}
-          }
-        </button>
-      </mat-dialog-actions>
-    </form>
-  `,
+  templateUrl: './task-form-dialog.html',
   styleUrl: '../../project-form-dialog.scss',
 })
 export class TaskFormDialog {

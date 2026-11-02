@@ -16,29 +16,7 @@ export interface RemoveMemberDialogData {
 @Component({
   selector: 'app-remove-member-dialog',
   imports: [MatButtonModule, MatDialogModule, MatProgressSpinnerModule],
-  template: `
-    <h2 mat-dialog-title>Remove member</h2>
-    <mat-dialog-content>
-      @if (error()) {
-        <div class="form-alert" role="alert">{{ error() }}</div>
-      }
-      <p>
-        Remove <strong>{{ member.firstName }} {{ member.lastName }}</strong> from this project?
-      </p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button type="button" [disabled]="isRemoving()" (click)="dialogRef.close()">
-        Cancel
-      </button>
-      <button mat-flat-button type="button" [disabled]="isRemoving()" (click)="confirm()">
-        @if (isRemoving()) {
-          <mat-spinner [diameter]="18" /> Removing…
-        } @else {
-          Remove member
-        }
-      </button>
-    </mat-dialog-actions>
-  `,
+  templateUrl: './remove-member-dialog.html',
 })
 export class RemoveMemberDialog {
   protected readonly dialogRef = inject(MatDialogRef<RemoveMemberDialog>);

@@ -11,30 +11,7 @@ import { ProjectDetails } from '../../projects.models';
 @Component({
   selector: 'app-delete-project-dialog',
   imports: [MatButtonModule, MatDialogModule, MatProgressSpinnerModule],
-  template: `
-    <h2 mat-dialog-title>Delete project</h2>
-    <mat-dialog-content>
-      @if (error()) {
-        <div class="form-alert" role="alert">{{ error() }}</div>
-      }
-      <p>
-        Delete <strong>{{ project.name }}</strong
-        >? This cannot be undone.
-      </p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button type="button" [disabled]="isDeleting()" (click)="dialogRef.close()">
-        Cancel
-      </button>
-      <button mat-flat-button type="button" [disabled]="isDeleting()" (click)="confirm()">
-        @if (isDeleting()) {
-          <mat-spinner [diameter]="18" /> Deleting…
-        } @else {
-          Delete project
-        }
-      </button>
-    </mat-dialog-actions>
-  `,
+  templateUrl: './delete-project-dialog.html',
 })
 export class DeleteProjectDialog {
   protected readonly dialogRef = inject(MatDialogRef<DeleteProjectDialog>);

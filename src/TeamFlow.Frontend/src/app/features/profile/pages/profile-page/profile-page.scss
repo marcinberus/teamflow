@@ -1,0 +1,24 @@
+.account {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+}
+.account div {
+  display: flex;
+  gap: 1rem;
+}
+.account dt {
+  min-width: 8rem;
+  opacity: 0.75;
+}
+.account dd {
+  margin: 0;
+}
+form {
+  display: grid;
+  gap: 0.25rem;
+  max-width: 30rem;
+}
+form button {
+  justify-self: start;
+}

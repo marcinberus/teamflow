@@ -1,0 +1,59 @@
+<div
+  class="dropzone"
+  [class.dragging]="isDragging()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
+  <mat-icon aria-hidden="true">upload_file</mat-icon>
+  <p>Drag a .csv or .json file here, or</p>
+  <button mat-stroked-button type="button" [disabled]="isBusy()" (click)="fileInput.click()">
+    Browse files
+  </button>
+  <input #fileInput hidden type="file" [accept]="accept" (change)="onBrowse(fileInput)" />
+</div>
+
+@if (file(); as f) {
+  <div class="file-info">
+    <span>
+      <strong>{{ f.name }}</strong> · {{ typeLabel(f) }} · {{ sizeLabel(f) }}
+    </span>
+    <button mat-button type="button" [disabled]="isBusy()" (click)="clear()">Clear</button>
+  </div>
+}
+
+@if (fileError(); as message) {
+  <div class="form-alert result" role="alert">{{ message }}</div>
+}
+
+@switch (state().kind) {
+  @case ('uploading') {
+    <div class="result" role="status">
+      <p>Uploading… {{ percent() }}%</p>
+      <mat-progress-bar mode="determinate" [value]="percent()" aria-label="Upload progress" />
+    </div>
+  }
+  @case ('processing') {
+    <div class="result" role="status">
+      <p>Upload complete. Processing on the server…</p>
+      <mat-progress-bar mode="indeterminate" aria-label="Processing import" />
+    </div>
+  }
+  @case ('success') {
+    <div class="success" role="status">
+      <strong>{{ successMessage() }}</strong>
+      <ng-content select="[success]" />
+    </div>
+  }
+  @case ('error') {
+    <div class="form-alert result" role="alert">{{ errorMessage() }}</div>
+  }
+}
+
+@if (file() && !isBusy()) {
+  <div class="actions">
+    <button mat-flat-button type="button" (click)="start()">Upload</button>
+  </div>
+}
+
+<ng-content />
