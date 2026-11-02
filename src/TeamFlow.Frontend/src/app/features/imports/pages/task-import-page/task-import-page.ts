@@ -1,16 +1,63 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { FileImport } from '../../file-import';
+import { ImportsApi } from '../../imports.api';
+import { ProjectsApi } from '../../../projects/projects.api';
 
 @Component({
   selector: 'app-task-import-page',
+  imports: [FileImport, MatButtonModule, RouterLink],
   template: `
     <header class="page-header">
       <h1>Import tasks</h1>
-      <p>Task imports stay scoped to the project identified by this route.</p>
+      <p>
+        @if (projectName(); as name) {
+          Into project <strong>{{ name }}</strong
+          >.
+        } @else {
+          Task imports are scoped to a single project.
+        }
+      </p>
     </header>
-    <section class="page-panel" aria-labelledby="task-import-placeholder-title">
-      <h2 id="task-import-placeholder-title">Task files</h2>
-      <p>This destination will be linked from project details when imports are built.</p>
+    <section class="page-panel" aria-labelledby="task-import-title">
+      <h2 id="task-import-title">Task file</h2>
+      <app-file-import
+        noun="tasks"
+        forbiddenMessage="You must be a member of this project to import tasks."
+        [upload]="upload"
+      >
+        <a success mat-button [routerLink]="['/projects', projectId]">Back to project</a>
+        <h3>Accepted formats</h3>
+        <p><strong>CSV</strong> — no header row. Each row has exactly five quoted fields:</p>
+        <pre>"Title","Description","UserId","DueDate","Status"</pre>
+        <p>
+          <strong>JSON</strong> — a top-level array of objects with <code>title</code>,
+          <code>description</code>, <code>userId</code>, <code>dueDate</code> and
+          <code>status</code>.
+        </p>
+        <p>
+          Some values are replaced rather than rejected: an unknown status becomes
+          <code>Todo</code>, a user who is not a project member becomes you, and an invalid due date
+          becomes empty. Review the imported tasks afterwards.
+        </p>
+      </app-file-import>
     </section>
   `,
 })
-export class TaskImportPage {}
+export class TaskImportPage {
+  protected readonly projectId = inject(ActivatedRoute).snapshot.paramMap.get('projectId')!;
+
+  private readonly imports = inject(ImportsApi);
+  private readonly projects = inject(ProjectsApi);
+
+  protected readonly projectName = signal<string | null>(null);
+  protected readonly upload = (file: File) => this.imports.importTasks(this.projectId, file);
+
+  constructor() {
+    this.projects.getProject(this.projectId).subscribe({
+      next: (project) => this.projectName.set(project.name),
+      error: () => undefined, // context only; the import itself reports 404/403
+    });
+  }
+}
